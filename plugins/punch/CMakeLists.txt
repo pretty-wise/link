@@ -1,7 +1,9 @@
 include(${CMAKE_SOURCE_DIR}/utils/utils.cmake)
-include(${CMAKE_SOURCE_DIR}/common/config.cmake)
+#include(${CMAKE_SOURCE_DIR}/common/config.cmake)
 include(${CMAKE_SOURCE_DIR}/extern/tinyxml2/config.cmake)
 include(${CMAKE_SOURCE_DIR}/extern/protobuf/config.cmake)
+
+find_package(rush REQUIRED)
 
 include_directories (
   ${CMAKE_SOURCE_DIR}/link/include

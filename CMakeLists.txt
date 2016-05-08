@@ -2,7 +2,7 @@ cmake_minimum_required (VERSION 2.6)
 project (link)
 set (link_VERSION_MAJOR 0)
 set (link_VERSION_MINOR 1)
-include (../settings.cmake)
+include (settings.cmake)
 
 set(TARGET_EXPORT_NAME "link-targets")
 set(INSTALL_LIB_DIR lib CACHE PATH "Installation directory for libraries.")
@@ -186,21 +186,21 @@ install(DIRECTORY link/include/
 
 execute_process(COMMAND curl ifconfig.co OUTPUT_VARIABLE HOSTNAME OUTPUT_STRIP_TRAILING_WHITESPACE)
 
-#file(GENERATE OUTPUT config/link.txt CONTENT 
-#"<link runtime=\"0\" hostname=\"${HOSTNAME}\">
-#	<plugin path=\"$<TARGET_FILE:gate>\">
-#		<config>
-#			<gate port=\"0\" max_connections=\"5\"/>
-#		</config>
-#	</plugin>
-#	<plugin path=\"$<TARGET_FILE:directory>\">
-#	</plugin>
-#	<plugin path=\"$<TARGET_FILE:rest>\">
-#	</plugin>
-#	<plugin path=\"$<TARGET_FILE:punch>\">
-#		<config>
-#			<punch port=\"0\" hostname=\"${HOSTNAME}\"/>
-#		</config>
-#	</plugin>
-#</link>
-#")
+file(GENERATE OUTPUT config/link.txt CONTENT 
+"<link runtime=\"0\" hostname=\"${HOSTNAME}\">
+  <plugin path=\"$<TARGET_FILE:gate>\">
+    <config>
+      <gate port=\"0\" max_connections=\"5\"/>
+    </config>
+  </plugin>
+  <plugin path=\"$<TARGET_FILE:directory>\">
+  </plugin>
+  <plugin path=\"$<TARGET_FILE:rest>\">
+  </plugin>
+  <plugin path=\"$<TARGET_FILE:punch>\">
+    <config>
+      <punch port=\"0\" hostname=\"${HOSTNAME}\"/>
+    </config>
+  </plugin>
+</link>
+")

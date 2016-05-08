@@ -136,7 +136,7 @@ void SimplePlugin::Recv(ConnectionHandle conn, void *buffer,
                         unsigned int nbytes,
                         std::function<void(void *, unsigned int)> func) {
   BASE_ASSERT(conn != 0);
-  int nrecv = 0;
+  u32 nrecv = 0;
   int data_received = 0;
   void *work_buffer = buffer;
   unsigned int work_buffer_size = nbytes;
