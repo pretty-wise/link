@@ -1,0 +1,41 @@
+package gate;
+
+message ClientMessage {
+	enum Type {
+		kLogin = 1;
+		kLogout = 2;
+	}
+	required Type type = 1;
+	required string protocol_version = 2;
+	optional Login login = 3;
+	optional Logout logout = 4;
+}
+
+message ServerMessage {
+	enum Type {
+		kLoggedIn = 1;
+		kLoggedOut = 2;
+	}
+	required Type type = 1;
+	required string protocol_version = 2;
+	optional LoggedIn logged_in = 3;
+	optional LoggedOut logged_out = 4;
+}
+
+message Login {
+	required string username = 1;
+	required int32 index = 2;
+}
+
+message LoggedIn {
+	required int32 index = 1;
+	required int32 user_id = 2;
+}
+
+message Logout {
+	required int32 user_id = 1;
+}
+
+message LoggedOut {
+	required int32 user_id = 1;
+}

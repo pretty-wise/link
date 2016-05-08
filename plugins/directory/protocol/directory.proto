@@ -1,0 +1,22 @@
+package directory;
+
+message PluginInfo {
+  optional string name = 1;
+  optional string version = 2;
+  optional string host = 3;
+  optional int32 pid = 4;
+  optional int32 port = 5;
+  required int64 handle = 6;
+}
+
+message Update {
+  enum Type {
+    PUBLISH = 1; // slave to master
+    SUPPRESS = 2; // slave to master
+    ANNOUNCE = 3; // master to slave
+    REVOKE = 4; // master to slave
+  }
+
+  required Type type = 1;
+  repeated PluginInfo info = 2;
+}

@@ -1,0 +1,6 @@
+project (tinyxml2)
+
+add_library (tinyxml2
+  tinyxml2.cpp 
+  tinyxml2.h
+)

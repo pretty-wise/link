@@ -1,0 +1,6 @@
+#add_subdirectory (gtest)
+add_subdirectory (civetweb)
+add_subdirectory (argtable2)
+add_subdirectory (jsmn)
+add_subdirectory (tinyxml2)
+add_subdirectory (protobuf)

@@ -1,0 +1,20 @@
+package handshake;
+
+message PluginInfo {
+  required string name = 1;
+  required string version = 2;
+  required string hostname = 3;
+  required int32 pid = 4;
+  required int32 port = 5;
+}
+
+message Handshake {
+  enum Type {
+    kSYN = 1;
+    kACK = 2;
+  }
+
+  required Type type = 1;
+  optional PluginInfo info = 2;
+  optional bool accepted = 3;
+}
