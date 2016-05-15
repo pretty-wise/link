@@ -11,36 +11,6 @@
 namespace Link {
 namespace Log {
 
-void ConsoleOutput(int category, const char *line, void *udata) {
-  printf("%s", line);
-}
-
-const char *GetCategoryString(int category) {
-  switch(category) {
-  case kLogDebug:
-    return "DBG";
-  case kLogInfo:
-    return "INF";
-  case kLogWarning:
-    return "WAR";
-  case kLogError:
-    return "ERR";
-  case kLogCritical:
-    return "CRI";
-  default:
-    break;
-  }
-  return "UNKNOWN	";
-}
-
-const char *SkipParentDirs(const char *path) {
-  const char *result = path;
-  while(result[0] == '.' && result[1] == '.' && result[2] == '/') {
-    result = &result[3];
-  }
-  return result;
-}
-
 void PluginWrite(const char *file, int line, int category,
                  const char *plugin_name, const char *plugin_version,
                  const char *format, va_list arg_list) {
