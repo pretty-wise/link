@@ -3,7 +3,7 @@ set (CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 # use relative path to src files to make __FILE__ macro more compact.
-set (CMAKE_USE_RELATIVE_PATHS ON)
+#set (CMAKE_USE_RELATIVE_PATHS ON)
 
 #set (CMAKE_C_COMPILER 		  "/usr/bin/clang")
 #set (CMAKE_CXX_COMPILER             "/usr/bin/clang++")
