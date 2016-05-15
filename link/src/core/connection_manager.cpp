@@ -17,6 +17,11 @@
 #include "common/protobuf_stream.h"
 #include "protocol/handshake.pb.h"
 
+const Base::LogChannel kConnectLog("connect");
+
+#define LOG_INFO(...) LINK_LOG(kConnectLog, kLogInfo, __VA_ARGS__)
+#define LOG_ERROR(...) LINK_LOG(kConnectLog, kLogError, __VA_ARGS__)
+
 namespace Link {
 
 bool operator==(const ConnectionListener::Connection &rhs,
@@ -195,24 +200,24 @@ void Connection::Init(ConnectionHandle _handle, PluginHandle _source,
   detail_index = _detail_index;
   flags = _flags;
   time = Base::Time::GetTimeMs();
-  LINK_INFO("conn(%p) state change %s. %s, %s.", handle,
-            ToString(ConnectionState::kDisconnected),
-            flags & Connection::kLocal ? "local" : "remote",
-            flags & Connection::kOutgoing ? "outgoing" : "incoming");
+  LOG_INFO("conn(%p) state change %s. %s, %s.", handle,
+           ToString(ConnectionState::kDisconnected),
+           flags & Connection::kLocal ? "local" : "remote",
+           flags & Connection::kOutgoing ? "outgoing" : "incoming");
 }
 
 void Connection::SetState(ConnectionState _state) {
   if(state == _state) {
-    LINK_ERROR("re-setting the same state for connection %p. state: %s", handle,
-               ToString(state));
+    LOG_ERROR("re-setting the same state for connection %p. state: %s", handle,
+              ToString(state));
   }
   ConnectionState old_state = state;
   state = _state;
 
-  LINK_INFO("conn(%p) state change %s -> %s. %s, %s.", handle,
-            ToString(old_state), ToString(state),
-            flags & Connection::kLocal ? "local" : "remote",
-            flags & Connection::kOutgoing ? "outgoing" : "incoming");
+  LOG_INFO("conn(%p) state change %s -> %s. %s, %s.", handle,
+           ToString(old_state), ToString(state),
+           flags & Connection::kLocal ? "local" : "remote",
+           flags & Connection::kOutgoing ? "outgoing" : "incoming");
 
   if(listener) {
     ConnectionListener::Connection data;
@@ -261,12 +266,12 @@ bool ConnectionManager::CreateListenSocket(u16 &port) {
   Base::MutexAutoLock lock(m_mutex);
   bool result = Base::Socket::Tcp::Listen(m_tcp.listen_socket, &port);
   if(result) {
-    LINK_INFO("(epoll) adding watch for sock(%d). data %d.",
-              m_tcp.listen_socket, kListenSocketId);
+    LOG_INFO("(epoll) adding watch for sock(%d). data %d.", m_tcp.listen_socket,
+             kListenSocketId);
     result = Base::EpollAdd(m_tcp.epoll, m_tcp.listen_socket, kListenSocketId,
                             Base::Epoll::OP_ALL);
     if(!result) {
-      LINK_ERROR("failed to add listen socket to epoll");
+      LOG_ERROR("failed to add listen socket to epoll");
     }
   }
   return result;
@@ -295,20 +300,20 @@ ConnectionManager::OpenLocal(ConnectionManager &rhs,
   // get local and remote plugin info.
   PluginInfo local_endpoint, remote_endpoint;
   if(!m_plugin_dir.GetInfo(local_id, local_endpoint)) {
-    LINK_ERROR("(connect) %p local endpoint not found for %p", m_owner,
-               local_id);
+    LOG_ERROR("(connect) %p local endpoint not found for %p", m_owner,
+              local_id);
     return 0;
   }
   if(!m_plugin_dir.GetInfo(remote_id, remote_endpoint)) {
-    LINK_ERROR("(connect) %p remote endpoint not found for %p", m_owner,
-               remote_id);
+    LOG_ERROR("(connect) %p remote endpoint not found for %p", m_owner,
+              remote_id);
     return 0;
   }
 
-  LINK_INFO("(connect) %p opening connection %p %s:%d(%d) -> %p %s:%d(%d)",
-            m_owner, local_id, local_endpoint.hostname, local_endpoint.port,
-            local_endpoint.pid, remote_id, remote_endpoint.hostname,
-            remote_endpoint.port, remote_endpoint.pid);
+  LOG_INFO("(connect) %p opening connection %p %s:%d(%d) -> %p %s:%d(%d)",
+           m_owner, local_id, local_endpoint.hostname, local_endpoint.port,
+           local_endpoint.pid, remote_id, remote_endpoint.hostname,
+           remote_endpoint.port, remote_endpoint.pid);
 
   ConnectionHandle handle = GenerateHandle();
   ConnectionHandle rhs_handle = rhs.GenerateHandle();
@@ -320,17 +325,17 @@ ConnectionManager::OpenLocal(ConnectionManager &rhs,
 
   u16 index = AddConnection(handle);
   if(index == InvalidIndex) {
-    LINK_ERROR("(connect) %p could not add connection. limit exceeded (%d/%d) "
-               "or handle already exists",
-               m_owner, m_connection_count, m_max_connections);
+    LOG_ERROR("(connect) %p could not add connection. limit exceeded (%d/%d) "
+              "or handle already exists",
+              m_owner, m_connection_count, m_max_connections);
     return 0;
   }
 
   u16 rhs_index = rhs.AddConnection(rhs_handle);
   if(rhs_index == InvalidIndex) {
-    LINK_ERROR("(connect) %p could not add remote connection. limit exceeded "
-               "(%d/%d) or handle already exists",
-               rhs.m_owner, rhs.m_connection_count, rhs.m_max_connections);
+    LOG_ERROR("(connect) %p could not add remote connection. limit exceeded "
+              "(%d/%d) or handle already exists",
+              rhs.m_owner, rhs.m_connection_count, rhs.m_max_connections);
     RemoveConnection(index);
     return 0;
   }
@@ -364,14 +369,14 @@ ConnectionManager::OpenLocal(ConnectionManager &rhs,
   BASE_ASSERT(m_owner == local_id);
   BASE_ASSERT(rhs.m_owner == remote_id);
 
-  LINK_INFO(
+  LOG_INFO(
       "(connect) %p opened connection %p %s:%d(%d) -> %p %s:%d(%d) (%p -> %p)",
       m_owner, local_id, local_endpoint.hostname, local_endpoint.port,
       local_endpoint.pid, remote_id, remote_endpoint.hostname,
       remote_endpoint.port, remote_endpoint.pid, common.handle,
       rhs_common.handle);
 
-  LINK_INFO(
+  LOG_INFO(
       "(connect) %p opened connection %p %s:%d(%d) -> %p %s:%d(%d) (%p -> %p)",
       rhs.m_owner, remote_id, remote_endpoint.hostname, remote_endpoint.port,
       remote_endpoint.pid, local_id, local_endpoint.hostname,
@@ -392,18 +397,18 @@ ConnectionManager::OpenRemote(ConnectionListener *listener_local,
   PluginInfo local_endpoint, remote_endpoint;
   // find both plugins in dictionary.
   if(!m_plugin_dir.GetInfo(local_id, local_endpoint)) {
-    LINK_ERROR("(connect) local endpoint not found for %d", local_id);
+    LOG_ERROR("(connect) local endpoint not found for %d", local_id);
     return 0;
   }
   if(!m_plugin_dir.GetInfo(remote_id, remote_endpoint)) {
-    LINK_ERROR("(connect) remote endpoint not found for %d", remote_id);
+    LOG_ERROR("(connect) remote endpoint not found for %d", remote_id);
     return 0;
   }
 
-  LINK_INFO("(connect) opening connection %p %s:%d(%d) -> %p %s:%d(%d)",
-            local_id, local_endpoint.hostname, local_endpoint.port,
-            local_endpoint.pid, remote_id, remote_endpoint.hostname,
-            remote_endpoint.port, remote_endpoint.pid);
+  LOG_INFO("(connect) opening connection %p %s:%d(%d) -> %p %s:%d(%d)",
+           local_id, local_endpoint.hostname, local_endpoint.port,
+           local_endpoint.pid, remote_id, remote_endpoint.hostname,
+           remote_endpoint.port, remote_endpoint.pid);
 
   Base::Socket::Handle socket = Base::Socket::Tcp::Open();
   if(Base::Socket::InvalidHandle == socket) {
@@ -417,7 +422,7 @@ ConnectionManager::OpenRemote(ConnectionListener *listener_local,
 
   Base::Url url(remote_endpoint.hostname, remote_endpoint.port);
 
-  LINK_INFO(
+  LOG_INFO(
       "open remote to %d.%d.%d.%d:%d sock(%d). conn(%p) plug(%p) -> plug(%p)",
       url.GetAddress().GetA(), url.GetAddress().GetB(), url.GetAddress().GetC(),
       url.GetAddress().GetD(), url.GetPort(), socket, handle, local_id,
@@ -449,19 +454,19 @@ ConnectionManager::OpenRemote(ConnectionListener *listener_local,
   detail.in_messages = new MessageInStream(kTcpConnectionBytes);
   detail.out_messages = new MessageOutStream(kTcpConnectionBytes);
 
-  LINK_INFO("(epoll) adding watch for sock(%d). data %d.", socket, index);
+  LOG_INFO("(epoll) adding watch for sock(%d). data %d.", socket, index);
   bool epoll_added = Base::EpollAdd(
       m_tcp.epoll, socket, reinterpret_cast<void *>(index),
       Base::Epoll::OP_READ | Base::Epoll::OP_WRITE | Base::Epoll::OP_ERROR);
   BASE_ASSERT(epoll_added,
               "(connect) failed to add epoll operation for sock(%d)", socket);
 
-  LINK_INFO("(connect)	opened connection %p %s:%d(%d) -> %p %s:%d(%d) (%p -> "
-            "%p). on sock(%d)",
-            local_id, local_endpoint.hostname, local_endpoint.port,
-            local_endpoint.pid, remote_id, remote_endpoint.hostname,
-            remote_endpoint.port, remote_endpoint.pid, local_id, remote_id,
-            socket);
+  LOG_INFO("(connect)	opened connection %p %s:%d(%d) -> %p %s:%d(%d) (%p -> "
+           "%p). on sock(%d)",
+           local_id, local_endpoint.hostname, local_endpoint.port,
+           local_endpoint.pid, remote_id, remote_endpoint.hostname,
+           remote_endpoint.port, remote_endpoint.pid, local_id, remote_id,
+           socket);
 
   return handle;
 }
@@ -497,7 +502,7 @@ const char *ToString(CloseReason reason) {
 void ConnectionManager::Close(ConnectionHandle handle, CloseReason reason) {
   Base::MutexAutoLock lock(m_mutex);
 
-  LINK_INFO("closing conn(%p). Reason: %s", handle, ToString(reason));
+  LOG_INFO("closing conn(%p). Reason: %s", handle, ToString(reason));
 
   u16 index = FindIndex(handle);
   if(index == InvalidIndex) {
@@ -506,7 +511,7 @@ void ConnectionManager::Close(ConnectionHandle handle, CloseReason reason) {
   }
 
   m_data[index].flags |= Connection::kClosed;
-  LINK_INFO("marked conn(%p) for closing.");
+  LOG_INFO("marked conn(%p) for closing.");
   TryClose(index);
 }
 
@@ -523,7 +528,7 @@ void ConnectionManager::Close(ConnectionHandle handle) {
 
 void ConnectionManager::CloseAll() {
   Base::MutexAutoLock lock(m_mutex);
-  LINK_INFO("closing all connections");
+  LOG_INFO("closing all connections");
 
   ConnectionHandle all_connections[m_max_connections];
   u16 num_connections = m_connection_count;
@@ -534,7 +539,7 @@ void ConnectionManager::CloseAll() {
     Close(all_connections[i], CR_CloseAll);
   }
 
-  LINK_INFO("all connections closed");
+  LOG_INFO("all connections closed");
 }
 
 std::string OperationsToString(int operations) {
@@ -561,7 +566,7 @@ void ConnectionManager::AcceptConnections(ConnectionListener *listener) {
 
     ConnectionHandle handle = GenerateHandle();
 
-    LINK_INFO(
+    LOG_INFO(
         "(connect) accepted new connection: %d - %d.%d.%d.%d:%d. handle: %p",
         new_connection, connectee.GetAddress().GetA(),
         connectee.GetAddress().GetB(), connectee.GetAddress().GetC(),
@@ -592,23 +597,23 @@ void ConnectionManager::AcceptConnections(ConnectionListener *listener) {
     BASE_ASSERT(has_local_info, "failed to retrieve local plugin info");
 
     // create io watch for socket.
-    LINK_INFO("(epoll) adding watch for sock(%d). data %d.", new_connection,
-              index);
+    LOG_INFO("(epoll) adding watch for sock(%d). data %d.", new_connection,
+             index);
     bool epoll_added = Base::EpollAdd(
         m_tcp.epoll, new_connection, reinterpret_cast<void *>(index),
         Base::Epoll::OP_READ | Base::Epoll::OP_WRITE | Base::Epoll::OP_ERROR);
     BASE_ASSERT(epoll_added, "failed to add epoll operation for sock(%d)",
                 new_connection);
 
-    LINK_INFO("(connect) remote connection added. sock(%d). plugin: %p. id: %p "
-              "(%p -> %p)",
-              new_connection, m_owner, common.handle, m_owner, common.endpoint);
-    LINK_INFO("(connect)	opened connection %p %s:%d(%d) -> %p %s:%d(%d) "
-              "(%p -> %p). on sock(%d)",
-              m_owner, local_endpoint.hostname, local_endpoint.port,
-              local_endpoint.pid, remote_id, "?" /*remote_endpoint.hostname*/,
-              0 /*remote_endpoint.port*/, 0 /*remote_endpoint.pid*/, handle,
-              0 /*remote_handle*/, new_connection);
+    LOG_INFO("(connect) remote connection added. sock(%d). plugin: %p. id: %p "
+             "(%p -> %p)",
+             new_connection, m_owner, common.handle, m_owner, common.endpoint);
+    LOG_INFO("(connect)	opened connection %p %s:%d(%d) -> %p %s:%d(%d) "
+             "(%p -> %p). on sock(%d)",
+             m_owner, local_endpoint.hostname, local_endpoint.port,
+             local_endpoint.pid, remote_id, "?" /*remote_endpoint.hostname*/,
+             0 /*remote_endpoint.port*/, 0 /*remote_endpoint.pid*/, handle,
+             0 /*remote_handle*/, new_connection);
 
     // this socket will be OP_WRITE notified and have its state changed to
     // kEstablished.
@@ -628,7 +633,7 @@ void ConnectionManager::HandleIO(ConnectionListener *listener,
   s32 num_dead_connections = 0;
 
   auto handler = [&](void *user_data, int operations, int debug_data) {
-    LINK_INFO(
+    LOG_INFO(
         "(epoll) event on %s conn(%p) sock(%d). udata: %d, op: %s, debug data "
         "%d.",
         user_data == kListenSocketId ? "listen" : "connection",
@@ -665,12 +670,12 @@ void ConnectionManager::HandleIO(ConnectionListener *listener,
                   "tcp only for remote connections. at index %zu. flags: %d",
                   connection_index, common.flags);
 
-      LINK_INFO("socket at index %d detail %d is sock(%d)", connection_index,
-                common.detail_index, socket);
+      LOG_INFO("socket at index %d detail %d is sock(%d)", connection_index,
+               common.detail_index, socket);
 
       if(operations & Base::Epoll::OP_READ) {
         // data contains the number of bytes of protocol data available to read
-        LINK_INFO("read");
+        LOG_INFO("read");
         MessageInStream::ProcessResult socket_result =
             remote.in_messages->Process(remote.socket);
         if(socket_result == MessageInStream::RS_WOULDBLOCK) {
@@ -679,20 +684,20 @@ void ConnectionManager::HandleIO(ConnectionListener *listener,
             // do not set kHandshake state. OP_WRITE event will.
           }
         } /*else if(socket_result == MessageInStream::RS_EOF) {
-					LINK_INFO("read to the EOF of conn(%p) sock(%d)", common.handle, remote.socket);
+					LOG_INFO("read to the EOF of conn(%p) sock(%d)", common.handle, remote.socket);
 					dead_connections[num_dead_connections++] = {common.handle, CR_EndOfFile };
 				} */ else {
-          LINK_ERROR("problem processing connection %p sock(%d). closing.",
-                     common.handle, remote.socket);
+          LOG_ERROR("problem processing connection %p sock(%d). closing.",
+                    common.handle, remote.socket);
           dead_connections[num_dead_connections++] = {common.handle,
                                                       CR_ReadError};
           // continue; // ?
         }
-        LINK_INFO("post read");
+        LOG_INFO("post read");
       }
 
       if(operations & Base::Epoll::OP_WRITE) {
-        LINK_INFO("write");
+        LOG_INFO("write");
         // BASE_ASSERT(common.state == ConnectionState::kConnecting);
         if(common.state == ConnectionState::kConnecting) {
           common.flags |= Connection::kWritable;
@@ -712,7 +717,7 @@ void ConnectionManager::HandleIO(ConnectionListener *listener,
                                       // todo: if EOF is notified we need to
          read all remaining data first.
 
-                                      LINK_INFO("sock(%d) closed with EOF.
+                                      LOG_INFO("sock(%d) closed with EOF.
          scheduling close for connection %p", remote.socket, common.handle);
                                       dead_connections[num_dead_connections++] =
          {common.handle, CR_EndOfFile};
@@ -721,15 +726,15 @@ void ConnectionManager::HandleIO(ConnectionListener *listener,
   };
 
   Base::MutexAutoLock lock(m_mutex);
-  //	LINK_INFO("epoll wait %dms", timeout);
+  //	LOG_INFO("epoll wait %dms", timeout);
   int event_num = Base::EpollWait(m_tcp.epoll, timeout, max_events, handler);
   if(event_num > 0) {
-    LINK_INFO("wait ended with %d", event_num);
+    LOG_INFO("wait ended with %d", event_num);
   }
 
   // close dead connections.
   for(s32 conn_index = 0; conn_index < num_dead_connections; ++conn_index) {
-    LINK_INFO("late closing %p", dead_connections[conn_index].handle);
+    LOG_INFO("late closing %p", dead_connections[conn_index].handle);
     Close(dead_connections[conn_index].handle,
           dead_connections[conn_index].reason);
   }
@@ -760,8 +765,8 @@ void ConnectionManager::UpdateHandshake() {
         Result result = remote.in_messages->Read(
             s_handshake_buffer, s_handshake_buffer_size, &read);
         if(result != RS_SUCCESS) {
-          LINK_ERROR("problem reading handshake ack size: %d/%d", read,
-                     s_handshake_buffer_size);
+          LOG_ERROR("problem reading handshake ack size: %d/%d", read,
+                    s_handshake_buffer_size);
           Close(connection.handle, CR_HandshakeReadError);
           error = true;
           continue;
@@ -770,7 +775,7 @@ void ConnectionManager::UpdateHandshake() {
         ProtobufStream stream(s_handshake_buffer, read);
         handshake::Handshake message;
         if(!message.ParseFromIstream(&stream)) {
-          LINK_ERROR("problem parsing handshake message");
+          LOG_ERROR("problem parsing handshake message");
           Close(connection.handle, CR_HandshakeParseError);
           error = true;
           continue;
@@ -791,38 +796,38 @@ void ConnectionManager::UpdateHandshake() {
 
           PluginHandle handle = m_plugin_dir.GenerateHandle(info);
           if(m_plugin_dir.Register(handle, info)) {
-            LINK_INFO("handshake registration succeeded of %s %s at %p",
-                      info.name, info.version, handle);
+            LOG_INFO("handshake registration succeeded of %s %s at %p",
+                     info.name, info.version, handle);
           } else {
-            LINK_INFO("handshake registration failed of %s %s at %p", info.name,
-                      info.version, handle);
+            LOG_INFO("handshake registration failed of %s %s at %p", info.name,
+                     info.version, handle);
           }
 
           if(connection.endpoint == 0) {
-            LINK_INFO("endpoint updated to %d", handle);
+            LOG_INFO("endpoint updated to %d", handle);
             connection.endpoint = handle;
           }
 
           if(connection.endpoint != handle) {
-            LINK_ERROR("connection endpoint mismatch for conn(%p). %p != %p",
-                       connection.handle, connection.endpoint, handle);
+            LOG_ERROR("connection endpoint mismatch for conn(%p). %p != %p",
+                      connection.handle, connection.endpoint, handle);
             Close(connection.handle, CR_HandshakeInfoMismatch);
             error = true;
             continue;
           }
 
-          LINK_INFO("handshake for conn(%p) received kSYN", connection.handle);
+          LOG_INFO("handshake for conn(%p) received kSYN", connection.handle);
           connection.flags |= Connection::kSynReceived;
         } else if(message.type() == handshake::Handshake::kACK) {
-          LINK_INFO("handshake for conn(%p) received kACK", connection.handle);
+          LOG_INFO("handshake for conn(%p) received kACK", connection.handle);
           if(message.accepted()) {
             connection.flags |= Connection::kAckReceived;
             u32 establishing_time = Base::Time::GetTimeMs() - connection.time;
-            LINK_INFO("conn(%p) established in %dms.", connection.handle,
-                      establishing_time);
+            LOG_INFO("conn(%p) established in %dms.", connection.handle,
+                     establishing_time);
             connection.SetState(ConnectionState::kEstablished);
           } else {
-            LINK_ERROR("conn(%p) refused", connection.handle);
+            LOG_ERROR("conn(%p) refused", connection.handle);
             error = true;
             Close(connection.handle, CR_HandshakeRefused);
             continue;
@@ -833,7 +838,7 @@ void ConnectionManager::UpdateHandshake() {
       if(connection.flags &
          Connection::kWritable) { // if writable, we can send SYN and ACK.
         if(!(connection.flags & Connection::kSynSent)) {
-          LINK_INFO("handshake for conn(%p) sending kSYN", connection.handle);
+          LOG_INFO("handshake for conn(%p) sending kSYN", connection.handle);
           if(SendHandshakeSyn(remote)) {
             connection.flags |= Connection::kSynSent;
           } else {
@@ -841,7 +846,7 @@ void ConnectionManager::UpdateHandshake() {
           }
         } else if((connection.flags & Connection::kSynReceived) &&
                   !(connection.flags & Connection::kAckSent)) {
-          LINK_INFO("handshake for conn(%p) sending kACK", connection.handle);
+          LOG_INFO("handshake for conn(%p) sending kACK", connection.handle);
           if(SendHandshakeAck(remote)) {
             connection.flags |= Connection::kAckSent;
           } else {
@@ -856,7 +861,7 @@ void ConnectionManager::UpdateHandshake() {
 bool ConnectionManager::SendHandshakeSyn(struct RemoteConnection &remote) {
   PluginInfo info;
   if(!m_plugin_dir.GetInfo(m_owner, info)) {
-    LINK_ERROR("problem getting plugin info for handshake syn");
+    LOG_ERROR("problem getting plugin info for handshake syn");
     return false;
   }
 
@@ -872,11 +877,11 @@ bool ConnectionManager::SendHandshakeSyn(struct RemoteConnection &remote) {
   std::string serialized;
   message.SerializeToString(&serialized);
 
-  LINK_INFO("sending handshake plugin %s %s", info.name, info.version);
+  LOG_INFO("sending handshake plugin %s %s", info.name, info.version);
 
   if(!remote.out_messages->Write(
          serialized.data(), static_cast<unsigned int>(serialized.length()))) {
-    LINK_ERROR("failed to send handshake syn. closing connection");
+    LOG_ERROR("failed to send handshake syn. closing connection");
     return false;
   }
   return true;
@@ -893,7 +898,7 @@ bool ConnectionManager::SendHandshakeAck(struct RemoteConnection &remote) {
   bool ret = remote.out_messages->Write(
       serialized.data(), static_cast<unsigned int>(serialized.length()));
   if(!ret) {
-    LINK_ERROR("failed to send handshake ack. closing connection");
+    LOG_ERROR("failed to send handshake ack. closing connection");
     return false;
   }
   return true;
@@ -981,8 +986,8 @@ bool ConnectionManager::GetNotification(Notification *notification) {
       notification->content.connection.handle = m_data[i].handle;
       notification->content.connection.endpoint = m_data[i].endpoint;
       notify = true;
-      LINK_INFO("pushing recv notification for %p %s", m_data[i].handle,
-                m_data[i].flags & Connection::kLocal ? "l" : "r");
+      LOG_INFO("pushing recv notification for %p %s", m_data[i].handle,
+               m_data[i].flags & Connection::kLocal ? "l" : "r");
       return notify;
     }
   }
@@ -1001,16 +1006,16 @@ void ConnectionManager::DestroyRemoteConnection(u16 index) {
   }
 
   // remove from epoll.
-  LINK_INFO("(epoll) removing watch for sock(%d).", remote.socket);
+  LOG_INFO("(epoll) removing watch for sock(%d).", remote.socket);
   Base::EpollRemove(m_tcp.epoll, remote.socket);
 
-  LINK_INFO("(connect) closing sock(%d)", remote.socket);
+  LOG_INFO("(connect) closing sock(%d)", remote.socket);
   Base::Socket::Close(remote.socket);
   remote.socket = 0;
   delete remote.in_messages;
   delete remote.out_messages;
 
-  LINK_INFO("destroyed remote conn(%p)", common.handle);
+  LOG_INFO("destroyed remote conn(%p)", common.handle);
 
   u16 swapped = RemoveRemoteConnection(m_tcp, common.detail_index);
   if(swapped != InvalidIndex) {
@@ -1049,7 +1054,7 @@ void ConnectionManager::DestroyLocalConnection(u16 index) {
     // remote_detail.remote_manager = nullptr; // do we clear that? what if we
     // want to reconnect?
 
-    LINK_INFO("destroyed local conn(%p).", common.handle);
+    LOG_INFO("destroyed local conn(%p).", common.handle);
 
     delete detail.in_messages;
 
@@ -1076,7 +1081,7 @@ void ConnectionManager::FlushOutgoing() {
       RemoteConnection &remote = m_tcp.connection[m_data[i].detail_index];
       bool result = remote.out_messages->Flush(remote.socket);
       if(!result) {
-        LINK_ERROR("problem flushing connection on sock(%d)", remote.socket);
+        LOG_ERROR("problem flushing connection on sock(%d)", remote.socket);
         remote.out_messages->Clear();
         Close(m_data[i].handle, CR_WriteError);
       }
@@ -1107,7 +1112,7 @@ u16 ConnectionManager::AddConnection(ConnectionHandle handle) {
   u16 index = m_connection_count;
   m_connection_list[index] = handle;
   m_connection_count++;
-  LINK_INFO("(connect) %p added connection %p at %d", m_owner, handle, index);
+  LOG_INFO("(connect) %p added connection %p at %d", m_owner, handle, index);
   return index;
 }
 
@@ -1121,8 +1126,8 @@ void ConnectionManager::RemoveConnection(u16 remove_index) {
     // move last element into freed slot.
     m_connection_list[remove_index] = m_connection_list[last_index];
 
-    LINK_INFO("(connect) %p moved connection %p to %d", m_owner,
-              m_connection_list[remove_index], remove_index);
+    LOG_INFO("(connect) %p moved connection %p to %d", m_owner,
+             m_connection_list[remove_index], remove_index);
 
     // move data to new position, because index refference changed.
     m_data[remove_index] = m_data[last_index];
@@ -1132,8 +1137,8 @@ void ConnectionManager::RemoveConnection(u16 remove_index) {
       RemoteConnection &remote =
           m_tcp.connection[m_data[remove_index].detail_index];
 
-      LINK_INFO("(epoll) updating watch data for sock(%d) from %d to %d.",
-                remote.socket, last_index, remove_index);
+      LOG_INFO("(epoll) updating watch data for sock(%d) from %d to %d.",
+               remote.socket, last_index, remove_index);
       bool epoll_updated = Base::EpollUpdate(
           m_tcp.epoll, remote.socket, reinterpret_cast<void *>(remove_index),
           Base::Epoll::OP_READ | Base::Epoll::OP_ERROR);
@@ -1142,8 +1147,8 @@ void ConnectionManager::RemoveConnection(u16 remove_index) {
                   remote.socket, last_index, remove_index);
     }
   }
-  LINK_INFO("(connect) %p removed connection %p at %d. flags: %d", m_owner,
-            handle, remove_index);
+  LOG_INFO("(connect) %p removed connection %p at %d. flags: %d", m_owner,
+           handle, remove_index);
   --m_connection_count;
 }
 

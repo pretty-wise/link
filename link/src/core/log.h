@@ -21,6 +21,8 @@ const Base::LogChannel kDefaultLinkLog("link");
 #define LINK_CRITICAL(...)                                                     \
   Base::Log::Write(__FILE__, __LINE__, kLogCritical, kDefaultLinkLog,          \
                    __VA_ARGS__)
+#define LINK_LOG(channel, level, ...)                                          \
+  Base::Log::Write(__FILE__, __LINE__, level, channel, __VA_ARGS__)
 
 namespace Link {
 namespace Log {
