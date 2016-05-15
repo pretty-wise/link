@@ -10,6 +10,7 @@
 #include "base/core/assert.h"
 #include "base/io/base_file.h"
 #include "base/threading/thread.h"
+#include "base/core/crash.h"
 
 #include "log.h"
 #include "plugin_manager.h"
@@ -40,6 +41,8 @@ int main(int argc, char *argv[]) {
   for(int i = 0; i < argc; ++i) {
     LINK_INFO("%d: %s", i, argv[i]);
   }
+
+  Base::RegisterCrashHandler();
 
   if(SIG_ERR == signal(SIGINT, signal_handler)) {
     LINK_ERROR("failed to register signal handler for SIGINT");
@@ -114,6 +117,8 @@ int main(int argc, char *argv[]) {
       return -9;
     }
   }
+
+  // Base::Crash();
 
   Link::PluginDirectory directory;
   Link::PluginManager plugin_manager(directory);
