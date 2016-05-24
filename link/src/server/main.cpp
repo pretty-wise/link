@@ -8,6 +8,7 @@
 
 #include "base/core/str.h"
 #include "base/core/assert.h"
+#include "base/core/log_file.h"
 #include "base/io/base_file.h"
 #include "base/threading/thread.h"
 #include "base/core/crash.h"
@@ -29,9 +30,29 @@ void signal_handler(int sig) {
   g_running = false;
 }
 
+void setup_logs() {
+  Base::Log::LogFile general = Base::Log::CreateLogFileUnique("", "output");
+  if(!general) {
+    return;
+  }
+  Base::Log::LogFile release = Base::Log::CreateLogFileUnique("", "release");
+  if(!release) {
+    Base::Log::DestroyLogFile(general);
+    return;
+  }
+
+  int release_filter =
+      Base::Log::kLogWarning | Base::Log::kLogError | Base::Log::kLogCritical;
+
+  Base::Log::AddFilter(general, Base::Log::kAnyCategory, Base::Log::kLogAll);
+  Base::Log::AddFilter(release, Base::Log::kAnyCategory, release_filter);
+}
+
 int main(int argc, char *argv[]) {
   // disable stdout buffering for testing purposes.
   setbuf(stdout, nullptr);
+
+  setup_logs();
 
   LINK_INFO("starting link server...");
   getcwd(g_working_dir, FILENAME_MAX);

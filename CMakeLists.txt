@@ -185,7 +185,7 @@ install(DIRECTORY link/include/
 #########################
 
 execute_process(COMMAND curl ifconfig.co OUTPUT_VARIABLE HOSTNAME OUTPUT_STRIP_TRAILING_WHITESPACE)
-
+#return()
 file(GENERATE OUTPUT config/link.txt CONTENT 
 "<link runtime=\"0\" hostname=\"${HOSTNAME}\">
   <plugin path=\"$<TARGET_FILE:gate>\">
