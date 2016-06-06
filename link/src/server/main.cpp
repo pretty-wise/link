@@ -44,6 +44,7 @@ void setup_logs() {
   int release_filter =
       Base::Log::kLogWarning | Base::Log::kLogError | Base::Log::kLogCritical;
 
+  Base::Log::Register(Base::Log::kLogAll, Base::Log::ConsoleOutput, nullptr);
   Base::Log::AddFilter(general, Base::Log::kAnyCategory, Base::Log::kLogAll);
   Base::Log::AddFilter(release, Base::Log::kAnyCategory, release_filter);
 }

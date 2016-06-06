@@ -23,7 +23,7 @@ static const u32 kTcpConnectionBytes = 10 * 1024;
 
 struct Connection {
   Base::Socket::Handle socket;
-  Base::Url address;
+  Base::Socket::Address address;
   Link::MessageInStream *in_messages;
   Link::MessageOutStream *out_messages;
 };
@@ -96,7 +96,7 @@ TCPServer::Handle TCPServer::GenerateHandle() {
 
 void TCPServer::AcceptConnection() {
   Base::Socket::Handle new_connection;
-  Base::Url connectee;
+  Base::Socket::Address connectee;
 
   if(Base::Socket::Tcp::Accept(m_listen_socket, &new_connection, &connectee)) {
     Handle index = GenerateHandle();
@@ -111,8 +111,8 @@ void TCPServer::AcceptConnection() {
     Connection &data = m_data[index];
     data.socket = new_connection;
     data.address = connectee;
-    LOG_CONNECTION("accepted new connection: %d - %d.%d.%d.%d:%d", index,
-                   PRINTF_URL(connectee));
+    LOG_CONNECTION("accepted new connection: %d - %s", index,
+                   Base::Socket::Print(connectee));
 
     m_cbs.on_connected(index, connectee, m_context);
 

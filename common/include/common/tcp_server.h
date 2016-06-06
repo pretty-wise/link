@@ -8,10 +8,6 @@
 #include "base/network/epoll.h"
 #include "base/threading/mutex.h"
 
-#define PRINTF_URL(url)                                                        \
-  url.GetAddress().GetA(), url.GetAddress().GetB(), url.GetAddress().GetC(),   \
-      url.GetAddress().GetD(), url.GetPort()
-
 namespace Link {
 
 class TCPServer {
@@ -26,10 +22,11 @@ public:
   };
   typedef u32 Handle;
   static const Handle kInvalidHandle = (Handle)-1;
-  typedef void (*OnConnected)(Handle connection, const Base::Url &url,
-                              void *udata);
+  typedef void (*OnConnected)(Handle connection,
+                              const Base::Socket::Address &addr, void *udata);
   typedef void (*OnDisconnected)(Handle connection, CloseReason reason,
-                                 const Base::Url &url, void *udata);
+                                 const Base::Socket::Address &addr,
+                                 void *udata);
   typedef void (*OnMessage)(Handle from, void *buffer, u32 nbytes, void *udata);
 
   static const char *ToString(CloseReason r);

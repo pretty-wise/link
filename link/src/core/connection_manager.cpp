@@ -421,14 +421,14 @@ ConnectionManager::OpenRemote(ConnectionListener *listener_local,
               handle);
 
   Base::Url url(remote_endpoint.hostname, remote_endpoint.port);
+  Base::Socket::Address addr;
+  Base::Socket::Address::CreateUDP(remote_endpoint.hostname,
+                                   remote_endpoint.port, &addr);
 
-  LOG_INFO(
-      "open remote to %d.%d.%d.%d:%d sock(%d). conn(%p) plug(%p) -> plug(%p)",
-      url.GetAddress().GetA(), url.GetAddress().GetB(), url.GetAddress().GetC(),
-      url.GetAddress().GetD(), url.GetPort(), socket, handle, local_id,
-      remote_id);
+  LOG_INFO("open remote to %s:%s sock(%d). conn(%p) plug(%p) -> plug(%p)",
+           Base::Socket::Print(addr), socket, handle, local_id, remote_id);
 
-  if(Base::Socket::Tcp::kFailed == Base::Socket::Tcp::Connect(socket, url)) {
+  if(Base::Socket::Tcp::kFailed == Base::Socket::Tcp::Connect(socket, addr)) {
     LINK_WARN("(connect) failed to connect socket for tcp connection");
     Base::Socket::Close(socket);
     return 0;
@@ -559,18 +559,15 @@ std::string OperationsToString(int operations) {
 
 void ConnectionManager::AcceptConnections(ConnectionListener *listener) {
   Base::Socket::Handle new_connection;
-  Base::Url connectee;
+  Base::Socket::Address connectee;
 
   while(Base::Socket::Tcp::Accept(m_tcp.listen_socket, &new_connection,
                                   &connectee)) {
 
     ConnectionHandle handle = GenerateHandle();
 
-    LOG_INFO(
-        "(connect) accepted new connection: %d - %d.%d.%d.%d:%d. handle: %p",
-        new_connection, connectee.GetAddress().GetA(),
-        connectee.GetAddress().GetB(), connectee.GetAddress().GetC(),
-        connectee.GetAddress().GetD(), connectee.GetPort(), handle);
+    LOG_INFO("(connect) accepted new connection: %d - %s. handle: %p",
+             new_connection, Base::Socket::Print(connectee), handle);
 
     u16 index = AddConnection(handle);
     if(index == InvalidIndex) {

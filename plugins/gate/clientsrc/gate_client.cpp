@@ -212,9 +212,8 @@ static bool InternalSend(struct context_t *ctx, const void *data,
   return ctx->out_stream->Write(data, nbytes);
 }
 
-bool Connect(struct context_t *ctx, const Base::Url &address) {
-  BASE_INFO(kGateClientLog, "connecting to %d.%d.%d.%d:%d",
-            PRINTF_URL(address));
+bool Connect(struct context_t *ctx, const Base::Url &url) {
+  BASE_INFO(kGateClientLog, "connecting to %d.%d.%d.%d:%d", PRINTF_URL(url));
   if(!ctx) {
     BASE_ERROR(kGateClientLog, "invalid context");
     return false;
@@ -233,6 +232,12 @@ bool Connect(struct context_t *ctx, const Base::Url &address) {
   ctx->state = kConnecting;
 
   // todo(kstasik): make it async
+  Base::Socket::Address address;
+  if(!Base::Socket::Address::CreateTCP(url, &address)) {
+    BASE_ERROR(kGateClientLog, "problem creating address");
+    return false;
+  }
+
   int res = Base::Socket::Tcp::Connect(ctx->socket, address);
   if(res == Base::Socket::Tcp::kFailed) {
     BASE_ERROR(kGateClientLog, "problem connecting");
