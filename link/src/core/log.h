@@ -10,16 +10,16 @@
 const Base::LogChannel kDefaultLinkLog("link");
 
 #define LINK_DEBUG(...)                                                        \
-  Base::Log::Write(__FILE__, __LINE__, kLogDebug, kDefaultLinkLog, __VA_ARGS__)
+  Base::Log::Write(__FILE__, __LINE__, Base::Log::kLogDebug, kDefaultLinkLog, __VA_ARGS__)
 #define LINK_INFO(...)                                                         \
-  Base::Log::Write(__FILE__, __LINE__, kLogInfo, kDefaultLinkLog, __VA_ARGS__)
+  Base::Log::Write(__FILE__, __LINE__, Base::Log::kLogInfo, kDefaultLinkLog, __VA_ARGS__)
 #define LINK_WARN(...)                                                         \
-  Base::Log::Write(__FILE__, __LINE__, kLogWarning, kDefaultLinkLog,           \
+  Base::Log::Write(__FILE__, __LINE__, Base::Log::kLogWarning, kDefaultLinkLog,           \
                    __VA_ARGS__)
 #define LINK_ERROR(...)                                                        \
-  Base::Log::Write(__FILE__, __LINE__, kLogError, kDefaultLinkLog, __VA_ARGS__)
+  Base::Log::Write(__FILE__, __LINE__, Base::Log::kLogError, kDefaultLinkLog, __VA_ARGS__)
 #define LINK_CRITICAL(...)                                                     \
-  Base::Log::Write(__FILE__, __LINE__, kLogCritical, kDefaultLinkLog,          \
+  Base::Log::Write(__FILE__, __LINE__, Base::Log::kLogCritical, kDefaultLinkLog,          \
                    __VA_ARGS__)
 #define LINK_LOG(channel, level, ...)                                          \
   Base::Log::Write(__FILE__, __LINE__, level, channel, __VA_ARGS__)

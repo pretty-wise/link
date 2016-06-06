@@ -19,8 +19,8 @@
 
 const Base::LogChannel kConnectLog("connect");
 
-#define LOG_INFO(...) LINK_LOG(kConnectLog, kLogInfo, __VA_ARGS__)
-#define LOG_ERROR(...) LINK_LOG(kConnectLog, kLogError, __VA_ARGS__)
+#define LOG_INFO(...) LINK_LOG(kConnectLog, Base::Log::kLogInfo, __VA_ARGS__)
+#define LOG_ERROR(...) LINK_LOG(kConnectLog, Base::Log::kLogError, __VA_ARGS__)
 
 namespace Link {
 
