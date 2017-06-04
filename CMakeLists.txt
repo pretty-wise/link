@@ -185,7 +185,7 @@ install(DIRECTORY link/include/
 #########################
 
 execute_process(COMMAND curl ifconfig.co OUTPUT_VARIABLE HOSTNAME OUTPUT_STRIP_TRAILING_WHITESPACE)
-return()
+
 file(GENERATE OUTPUT config/link.txt CONTENT 
 "<link runtime=\"0\" hostname=\"${HOSTNAME}\">
   <plugin path=\"$<TARGET_FILE:gate>\">
@@ -197,7 +197,9 @@ file(GENERATE OUTPUT config/link.txt CONTENT
   </plugin>
   <plugin path=\"$<TARGET_FILE:rest>\">
   </plugin>
-  <plugin path=\"$<TARGET_FILE:punch>\">
+  <plugin path=\"$<TARGET_FILE:launcher>\">
+  </plugin>
+  <plugin path=\"$<TARGET_FILE:monitor>\">
     <config>
       <punch port=\"0\" hostname=\"${HOSTNAME}\"/>
     </config>
