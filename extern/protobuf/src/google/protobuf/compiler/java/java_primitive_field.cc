@@ -35,6 +35,7 @@
 #include <map>
 #include <string>
 
+#include <google/protobuf/stubs/logging.h>
 #include <google/protobuf/stubs/common.h>
 #include <google/protobuf/compiler/java/java_context.h>
 #include <google/protobuf/compiler/java/java_doc_comment.h>
@@ -55,32 +56,12 @@ using internal::WireFormatLite;
 
 namespace {
 
-const char* PrimitiveTypeName(JavaType type) {
-  switch (type) {
-    case JAVATYPE_INT    : return "int";
-    case JAVATYPE_LONG   : return "long";
-    case JAVATYPE_FLOAT  : return "float";
-    case JAVATYPE_DOUBLE : return "double";
-    case JAVATYPE_BOOLEAN: return "boolean";
-    case JAVATYPE_STRING : return "java.lang.String";
-    case JAVATYPE_BYTES  : return "com.google.protobuf.ByteString";
-    case JAVATYPE_ENUM   : return NULL;
-    case JAVATYPE_MESSAGE: return NULL;
-
-    // No default because we want the compiler to complain if any new
-    // JavaTypes are added.
-  }
-
-  GOOGLE_LOG(FATAL) << "Can't get here.";
-  return NULL;
-}
-
 void SetPrimitiveVariables(const FieldDescriptor* descriptor,
                            int messageBitIndex,
                            int builderBitIndex,
                            const FieldGeneratorInfo* info,
                            ClassNameResolver* name_resolver,
-                           map<string, string>* variables) {
+                           std::map<string, string>* variables) {
   SetCommonFieldVariables(descriptor, info, variables);
 
   (*variables)["type"] = PrimitiveTypeName(GetJavaType(descriptor));
@@ -94,7 +75,8 @@ void SetPrimitiveVariables(const FieldDescriptor* descriptor,
       "" : ("= " + ImmutableDefaultValue(descriptor, name_resolver));
   (*variables)["capitalized_type"] =
       GetCapitalizedType(descriptor, /* immutable = */ true);
-  (*variables)["tag"] = SimpleItoa(WireFormat::MakeTag(descriptor));
+  (*variables)["tag"] =
+      SimpleItoa(static_cast<int32>(WireFormat::MakeTag(descriptor)));
   (*variables)["tag_size"] = SimpleItoa(
       WireFormat::TagSize(descriptor->number(), GetType(descriptor)));
   if (IsReferenceType(GetJavaType(descriptor))) {
@@ -113,8 +95,7 @@ void SetPrimitiveVariables(const FieldDescriptor* descriptor,
   if (fixed_size != -1) {
     (*variables)["fixed_size"] = SimpleItoa(fixed_size);
   }
-  (*variables)["on_changed"] =
-      HasDescriptorMethods(descriptor->containing_type()) ? "onChanged();" : "";
+  (*variables)["on_changed"] = "onChanged();";
 
   if (SupportFieldPresence(descriptor->file())) {
     // For singular messages and builders, one bit is used for the hasField bit.
@@ -542,8 +523,17 @@ void ImmutablePrimitiveOneofFieldGenerator::
 GenerateSerializationCode(io::Printer* printer) const {
   printer->Print(variables_,
     "if ($has_oneof_case_message$) {\n"
-    "  output.write$capitalized_type$(\n"
-    "      $number$, ($type$)(($boxed_type$) $oneof_name$_));\n"
+    "  output.write$capitalized_type$(\n");
+  // $type$ and $boxed_type$ is the same for bytes fields so we don't need to
+  // do redundant casts.
+  if (GetJavaType(descriptor_) == JAVATYPE_BYTES) {
+    printer->Print(variables_,
+      "      $number$, ($type$) $oneof_name$_);\n");
+  } else {
+    printer->Print(variables_,
+      "      $number$, ($type$)(($boxed_type$) $oneof_name$_));\n");
+  }
+  printer->Print(
     "}\n");
 }
 
@@ -552,8 +542,17 @@ GenerateSerializedSizeCode(io::Printer* printer) const {
   printer->Print(variables_,
     "if ($has_oneof_case_message$) {\n"
     "  size += com.google.protobuf.CodedOutputStream\n"
-    "    .compute$capitalized_type$Size(\n"
-    "        $number$, ($type$)(($boxed_type$) $oneof_name$_));\n"
+    "    .compute$capitalized_type$Size(\n");
+  // $type$ and $boxed_type$ is the same for bytes fields so we don't need to
+  // do redundant casts.
+  if (GetJavaType(descriptor_) == JAVATYPE_BYTES) {
+    printer->Print(variables_,
+      "        $number$, ($type$) $oneof_name$_);\n");
+  } else {
+    printer->Print(variables_,
+      "        $number$, ($type$)(($boxed_type$) $oneof_name$_));\n");
+  }
+  printer->Print(
     "}\n");
 }
 
@@ -619,8 +618,8 @@ GenerateMembers(io::Printer* printer) const {
     "  return $name$_.get(index);\n"
     "}\n");
 
-  if (descriptor_->options().packed() &&
-      HasGeneratedMethods(descriptor_->containing_type())) {
+  if (descriptor_->is_packed() &&
+      context_->HasGeneratedMethods(descriptor_->containing_type())) {
     printer->Print(variables_,
       "private int $name$MemoizedSerializedSize = -1;\n");
   }
@@ -791,11 +790,14 @@ GenerateParsingDoneCode(io::Printer* printer) const {
 
 void RepeatedImmutablePrimitiveFieldGenerator::
 GenerateSerializationCode(io::Printer* printer) const {
-  if (descriptor_->options().packed()) {
+  if (descriptor_->is_packed()) {
+    // We invoke getSerializedSize in writeTo for messages that have packed
+    // fields in ImmutableMessageGenerator::GenerateMessageSerializationMethods.
+    // That makes it safe to rely on the memoized size here.
     printer->Print(variables_,
       "if (get$capitalized_name$List().size() > 0) {\n"
-      "  output.writeRawVarint32($tag$);\n"
-      "  output.writeRawVarint32($name$MemoizedSerializedSize);\n"
+      "  output.writeUInt32NoTag($tag$);\n"
+      "  output.writeUInt32NoTag($name$MemoizedSerializedSize);\n"
       "}\n"
       "for (int i = 0; i < $name$_.size(); i++) {\n"
       "  output.write$capitalized_type$NoTag($name$_.get(i));\n"
@@ -829,7 +831,7 @@ GenerateSerializedSizeCode(io::Printer* printer) const {
   printer->Print(
       "size += dataSize;\n");
 
-  if (descriptor_->options().packed()) {
+  if (descriptor_->is_packed()) {
     printer->Print(variables_,
       "if (!get$capitalized_name$List().isEmpty()) {\n"
       "  size += $tag_size$;\n"
@@ -842,7 +844,7 @@ GenerateSerializedSizeCode(io::Printer* printer) const {
   }
 
   // cache the data size for packed fields.
-  if (descriptor_->options().packed()) {
+  if (descriptor_->is_packed()) {
     printer->Print(variables_,
       "$name$MemoizedSerializedSize = dataSize;\n");
   }
