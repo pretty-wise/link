@@ -1,10 +1,4 @@
 include(${CMAKE_SOURCE_DIR}/utils/utils.cmake)
-include(${CMAKE_SOURCE_DIR}/extern/jsmn/config.cmake)
-
-include_directories (
-  ${CMAKE_SOURCE_DIR}/link/include
-  ${CMAKE_SOURCE_DIR}/plugins/rest/include
-)
 
 #
 # monitor plugin.
@@ -17,7 +11,7 @@ set( SOURCES
 )
 
 plugin_framework(monitor ${SOURCES})
-target_link_libraries (monitor rest_client link_plugin jsmn)
+target_link_libraries (monitor rest_client link_plugin link_common)
 
 if(ENABLE_TEST)
   add_subdirectory (test)

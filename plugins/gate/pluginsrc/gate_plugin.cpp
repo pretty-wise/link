@@ -9,6 +9,8 @@
 
 #include "tinyxml2.h"
 
+#include "hiredis.h"
+
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -50,6 +52,28 @@ GatePlugin::GatePlugin()
 
 GatePlugin::~GatePlugin() { free(m_recv_buffer); }
 
+bool GatePlugin::RedisConnectBlocking(const char *hostname, u16 port) {
+  m_redis = redisConnect(hostname, port);
+  if(!m_redis) {
+    PLUGIN_ERROR("redis: can't allocate redis");
+    return false;
+  }
+  if(m_redis->err) {
+    PLUGIN_ERROR("redis: %s", m_redis->errstr);
+    return false;
+  }
+
+  PLUGIN_INFO("redis connected at %s:%d", hostname, port);
+  return true;
+}
+
+void GatePlugin::RedisDisconnect() {
+  if(!m_redis)
+    return;
+  redisFree(m_redis);
+  m_redis = nullptr;
+}
+
 bool GatePlugin::OnStartup(const char *config, streamsize nbytes) {
 
   if(!RegisterCommand(&m_list_cmd) || !RegisterCommand(&m_disconnect_cmd) ||
@@ -70,25 +94,37 @@ bool GatePlugin::OnStartup(const char *config, streamsize nbytes) {
   }
 
   u16 port = 0;
+  u32 max_connections = 0;
+  std::string redis_hostname("localhost");
+  u16 redis_port = 6379;
+  {
+    tinyxml2::XMLElement *root = doc.RootElement();
+    if(root->Attribute("port")) {
+      port = root->IntAttribute("port");
+      PLUGIN_INFO("port read %d", port);
+    } else {
+      PLUGIN_WARN("no port specified, defaulting to 0");
+    }
 
-  tinyxml2::XMLElement *root = doc.RootElement();
-  if(root->Attribute("port")) {
-    port = root->IntAttribute("port");
-    PLUGIN_INFO("port read %d", port);
-  } else {
-    PLUGIN_WARN("no port specified, defaulting to 0");
-  }
+    if(!root->Attribute("max_connections")) {
+      PLUGIN_ERROR("maximum connection count not specified");
+      return false;
+    }
+    max_connections = root->IntAttribute("max_connections");
+    PLUGIN_INFO("maximum number of connections: %d", max_connections);
 
-  if(!root->Attribute("max_connections")) {
-    PLUGIN_ERROR("maximum connection count not specified");
-    return false;
-  }
-  u32 max_connections = root->IntAttribute("max_connections");
-  PLUGIN_INFO("maximum number of connections: %d", max_connections);
+    if(max_connections == 0) {
+      PLUGIN_ERROR("invalid number of max connections: %d", max_connections);
+      return false;
+    }
 
-  if(max_connections == 0) {
-    PLUGIN_ERROR("invalid number of max connections: %d", max_connections);
-    return false;
+    tinyxml2::XMLElement *redis = root->FirstChildElement("redis");
+    if(redis && redis->Attribute("hostname") && redis->Attribute("port")) {
+      redis_hostname = redis->Attribute("hostname");
+      redis_port = redis->IntAttribute("port");
+    } else {
+      PLUGIN_WARN("failed to load redis config");
+    }
   }
 
   m_users = new Users(max_connections);
@@ -111,6 +147,8 @@ bool GatePlugin::OnStartup(const char *config, streamsize nbytes) {
 
   PLUGIN_INFO("gate listening on port: %d", port);
 
+  RedisConnectBlocking(redis_hostname.c_str(), redis_port);
+
   return true;
 }
 
@@ -118,6 +156,7 @@ void GatePlugin::OnShutdown() {
   UnregisterCommand(&m_list_cmd);
   UnregisterCommand(&m_disconnect_cmd);
   UnregisterCommand(&m_logout_cmd);
+  RedisDisconnect();
 
   m_conn->CloseAll(TCPServer::CloseReason::kShutdown);
   delete m_users;
@@ -163,13 +202,39 @@ void GatePlugin::ParseDataReceived(void *buffer, unsigned int nbytes,
                                    ConnectionHandle connection,
                                    PluginHandle plugin) {}
 
+// HMSET user:1 key1 val1 key2 val2
+// HGETALL user:1
+// HGET user:1 key1 key4
+// HEXISTS user:1 key3
+// HSET user:1 key3 val3
+
 void GatePlugin::AddConnection(TCPServer::Handle handle,
                                const Base::Socket::Address &address) {
-  m_users->AddConnection(handle, address);
+  redisReply *reply = static_cast<redisReply *>(
+      // redisCommand(m_redis, "SET user:%llu data", handle));
+      redisCommand(m_redis, "HMSET user:%llu"
+                            "id %llu"
+                            "name user_name",
+                   handle, handle));
+  if(!reply) {
+    PLUGIN_ERROR("redis command failed");
+    return;
+  }
+  PLUGIN_INFO("HMSET: %s", reply->str);
+
+  freeReplyObject(reply);
 }
 
 void GatePlugin::RemConnection(TCPServer::Handle handle) {
-  m_users->RemConnection(handle);
+
+  redisReply *reply =
+      static_cast<redisReply *>(redisCommand(m_redis, "DEL user:%llu", handle));
+  if(!reply) {
+    PLUGIN_ERROR("redis command failed");
+    return;
+  }
+  PLUGIN_INFO("DEL: %s", reply->str);
+  freeReplyObject(reply);
 }
 
 void GatePlugin::HandleMessage(TCPServer::Handle handle, void *data,

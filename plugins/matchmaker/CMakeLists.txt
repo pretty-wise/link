@@ -1,12 +1,4 @@
 include(${CMAKE_SOURCE_DIR}/utils/utils.cmake)
-include(${CMAKE_SOURCE_DIR}/extern/tinyxml2/config.cmake)
-include(${CMAKE_SOURCE_DIR}/extern/protobuf/config.cmake)
-
-include_directories (
-  ${CMAKE_SOURCE_DIR}/link/include
-  ${CMAKE_SOURCE_DIR}/plugins/matchmaker/include
-	${CMAKE_SOURCE_DIR}/plugins/rest/include
-)
 
 compile_proto(PROTOCOL 
 	""
@@ -24,7 +16,11 @@ set( SOURCES
 )	
 
 plugin_framework(matchmaker ${SOURCES})
-target_link_libraries (matchmaker link_plugin link_common rest_client tinyxml2 protobuf)
+target_link_libraries (matchmaker PRIVATE link_plugin link_common rest_client tinyxml2 protobuf)
+
+target_include_directories(matchmaker PRIVATE
+	$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/plugins/matchmaker/include>
+)
 
 #
 # matchmaker client
@@ -37,7 +33,12 @@ set( SOURCES
 )
 
 add_library(matchmaker_client ${SOURCES})
-target_link_libraries (matchmaker_client link_common protobuf)
+
+target_link_libraries (matchmaker_client PRIVATE link_common protobuf)
+
+target_include_directories(matchmaker_client PRIVATE
+	$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/plugins/matchmaker/include>
+)
 
 if(ENABLE_TEST)
   add_subdirectory (test)

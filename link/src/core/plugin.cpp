@@ -1,15 +1,15 @@
 /*
  * Copywrite 2014-2015 Krzysztof Stasik. All rights reserved.
  */
-#include "plugin.h"
-#include "link_private.h"
-#include "plugin_manager.h"
-#include "log.h"
 #include "base/network/address.h"
+#include "link_private.h"
+#include "log.h"
+#include "plugin.h"
+#include "plugin_manager.h"
 
+#include "base/core/assert.h"
 #include "base/core/memory.h"
 #include "base/core/str.h"
-#include "base/core/assert.h"
 
 namespace Link {
 
@@ -98,7 +98,7 @@ bool Plugin::Start(const LinkConfiguration &configuration) {
     return false;
   }
 
-  if(m_remote_call.Startup < 0)
+  if(m_remote_call.Startup == nullptr)
     return false;
 
   if(m_started)

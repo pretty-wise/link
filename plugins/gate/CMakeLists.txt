@@ -1,12 +1,4 @@
 include(${CMAKE_SOURCE_DIR}/utils/utils.cmake)
-include(${CMAKE_SOURCE_DIR}/extern/tinyxml2/config.cmake)
-include(${CMAKE_SOURCE_DIR}/extern/protobuf/config.cmake)
-
-include_directories (
-  ${CMAKE_SOURCE_DIR}/link/include
-  ${CMAKE_SOURCE_DIR}/plugins/gate/include
-	${CMAKE_SOURCE_DIR}/plugins/rest/include
-)
 
 compile_proto(PROTOCOL 
 	""
@@ -28,7 +20,11 @@ set( SOURCES
 )	
 
 plugin_framework(gate ${SOURCES})
-target_link_libraries (gate link_plugin link_common rest_client tinyxml2 protobuf)
+target_link_libraries (gate PRIVATE link_plugin link_common rest_client tinyxml2 protobuf hiredis)
+
+target_include_directories(gate PRIVATE
+	$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/plugins/gate/include>
+)
 
 #
 # gate client
@@ -41,7 +37,12 @@ set( SOURCES
 )
 
 add_library(gate_client ${SOURCES})
-target_link_libraries (gate_client link_common protobuf)
+target_link_libraries (gate_client PRIVATE link_common protobuf)
+
+target_include_directories(gate_client PRIVATE
+	$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/plugins/gate/include>
+)
+
 
 if(ENABLE_TEST)
   add_subdirectory (test)

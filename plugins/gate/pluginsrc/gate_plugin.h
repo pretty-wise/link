@@ -12,6 +12,8 @@
 #include "gate_commands.h"
 #include "gate_users.h"
 
+struct redisContext;
+
 namespace Link {
 namespace Gate {
 /*
@@ -51,8 +53,13 @@ private:
   void ParseDataReceived(void *buffer, unsigned int nbytes,
                          ConnectionHandle connection, PluginHandle plugin);
 
+  bool RedisConnectBlocking(const char *hostname, u16 port);
+  void RedisDisconnect();
+
+private:
   TCPServer *m_conn;
   void *m_recv_buffer;
+  redisContext *m_redis;
 
   Users *m_users;
 

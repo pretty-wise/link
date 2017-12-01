@@ -71,8 +71,8 @@ public:
   ///! @param raw_length The length of the raw value to write in characters.
   void WriteRaw(const char *name, const char *raw, size_t raw_length);
 
-  ///! Finalizes the JSON document by inserting any needed closing brackets and
-  ///! prevents further writing to the output buffer.
+  ///! Finalizes the JSON document by inserting any needed closing brackets
+  /// and ! prevents further writing to the output buffer.
   void Finalize();
 
 private:

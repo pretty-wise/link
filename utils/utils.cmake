@@ -15,8 +15,6 @@ endfunction (simple_test)
 function (plugin_framework PLUGIN_NAME)
   #message("creating " ${PLUGIN_NAME} " with " ${ARGN})
 
-  include_directories(${CMAKE_SOURCE_DIR}/plugins/common/include)
-
   # plugin destination folder.
   set (CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib/plugin)
 
@@ -34,5 +32,6 @@ function (plugin_framework PLUGIN_NAME)
     ${SRC_LIST}
     ${FRAMEWORK_SRC}
   )
-  target_link_libraries (${PLUGIN_NAME} link_plugin)
+
+	target_include_directories(${PLUGIN_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/plugins/common/include)
 endfunction (plugin_framework)

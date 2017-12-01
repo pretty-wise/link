@@ -1,11 +1,4 @@
 include(${CMAKE_SOURCE_DIR}/utils/utils.cmake)
-include(${CMAKE_SOURCE_DIR}/extern/jsmn/config.cmake)
-
-include_directories (
-  ${CMAKE_SOURCE_DIR}/link/include
-  ${CMAKE_SOURCE_DIR}/extern/civetweb/include
-  ${CMAKE_SOURCE_DIR}/plugins/rest/include
-)
 
 #
 # rest plugin.
@@ -19,7 +12,7 @@ set( SOURCES
 )
 
 plugin_framework(rest ${SOURCES})
-target_link_libraries (rest civetweb rest_client link_plugin jsmn)
+target_link_libraries (rest PRIVATE civetweb rest_client link_plugin link_common)
 
 #
 # rest client
@@ -32,7 +25,14 @@ set( SOURCES
 )
 
 add_library(rest_client ${SOURCES})
-target_link_libraries (rest_client link_common)
+
+target_link_libraries (rest_client PRIVATE link_plugin link_common)
+
+target_include_directories(rest_client PUBLIC
+	$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/plugins/rest/include>
+	$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/plugins/common/include>
+)
+
 
 if(ENABLE_TEST)
   add_subdirectory (test)

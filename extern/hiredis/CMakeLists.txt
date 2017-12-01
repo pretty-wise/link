@@ -1,7 +1,5 @@
 project (hiredis)
 
-include_directories(.)
-
 add_library (hiredis
 	async.c
 	async.h
@@ -18,4 +16,9 @@ add_library (hiredis
 	sds.h
 	sdsalloc.h
 	test.c
+)
+
+target_include_directories(hiredis PUBLIC
+	$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/extern/hiredis>
+	$<INSTALL_INTERFACE:/extern/hiredis>
 )

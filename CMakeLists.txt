@@ -1,50 +1,38 @@
-cmake_minimum_required (VERSION 2.6)
+cmake_minimum_required (VERSION 3.0)
 project (link)
 set (link_VERSION_MAJOR 0)
 set (link_VERSION_MINOR 1)
+set (link_VERSION 1.0)
 include (settings.cmake)
+include (extern/protobuf/config.cmake)
 
-set(TARGET_EXPORT_NAME "link-targets")
 set(INSTALL_LIB_DIR lib CACHE PATH "Installation directory for libraries.")
 set(INSTALL_BIN_DIR bin CACHE PATH "Installation directory for binaries.")
 set(INSTALL_INCLUDE_DIR include CACHE PATH "Installation directory for includes.")
 set(INSTALL_CMAKE_DIR cmake CACHE PATH "Installation directory for cmake files.")
 
-# Make relative paths absolute (needed later on)
-foreach(p LIB BIN INCLUDE CMAKE)
-	set(var INSTALL_${p}_DIR)
-	if(NOT IS_ABSOLUTE "${${var}}")
-		set(${var} "${CMAKE_INSTALL_PREFIX}/${${var}}")
-	endif()
-endforeach()
+find_package(Base REQUIRED)
 
-find_package(base REQUIRED)
-if(NOT BASE_FOUND)
-	message(FATAL_ERROR 
-		"base library not found. searched in: ${base_CONSIDERED_CONFIGS}"
-	)
-endif()
+add_subdirectory(extern)
 
-add_subdirectory (extern)
+#target_include_directories(link PUBLIC
+#	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/common/include>
+#	$<INSTALL_INTERFACE:common/include>
+#	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/link/src/common>
+#	$<INSTALL_INTERFACE:link/src/common>
+#	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/link/include>
+#	$<INSTALL_INTERFACE:link/include>
+#)
 
-include_directories (
-	${BASE_INCLUDES}
-	common/include
-	link/src/common
-	link/include
-)
+#target_include_directories(link PRIVATE
+#	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}link/src/common>
+#	$<INSTALL_INTERFACE:link/src/common>
+#)
 
 #
 # common code for link and plugins. mostly utilities.
 #
 project(link_common)
-
-add_definitions(-DJSMN_PARENT_LINKS)
-
-include_directories (
-  ${CMAKE_SOURCE_DIR}/common/include
-  ${CMAKE_SOURCE_DIR}/extern/jsmn
-)
 
 set (SOURCES
   common/include/common/json/json_writer.h
@@ -59,15 +47,22 @@ set (SOURCES
 )
 
 add_library (link_common ${SOURCES})
-target_link_libraries (link_common base jsmn)
+
+target_include_directories(link_common 
+	PUBLIC
+	$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/common/include>
+	$<INSTALL_INTERFACE:/common/include>
+)
+
+target_link_libraries (link_common 
+	PUBLIC Base::Base jsmn
+)
 
 #
 # link server code. includes plugin shared object interface.
 #
-project (link_core)
 
-include (${CMAKE_SOURCE_DIR}/extern/tinyxml2/config.cmake)
-include (${CMAKE_SOURCE_DIR}/extern/protobuf/config.cmake)
+project (link_core)
 
 set (PUBLIC_FILES
   link/include/link/link.h
@@ -101,7 +96,16 @@ compile_proto (PROTOCOL link/src/core
 )
 
 add_library (link_core ${PUBLIC_FILES} ${PRIVATE_FILES} ${PROTOCOL})
-target_link_libraries (link_core base tinyxml2 protobuf)
+
+target_include_directories(link_core 
+	PUBLIC
+	$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/link/include>
+	$<INSTALL_INTERFACE:${CMAKE_SOURCE_DIR}/link/include>
+	PRIVATE
+	$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/link/src/common>
+)
+
+target_link_libraries (link_core PUBLIC Base::Base link_common PRIVATE tinyxml2 protobuf)
 
 #
 #
@@ -113,50 +117,68 @@ set (SOURCES
 )
 
 add_library (link_plugin ${SOURCES})
-target_link_libraries (link_plugin base)
+
+target_link_libraries (link_plugin PUBLIC Base::Base)
+
+target_include_directories(link_plugin PRIVATE 
+	$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/link/src/common>
+)
 
 #
 #
 #
 project (link_server)
 
-include(${CMAKE_SOURCE_DIR}/extern/tinyxml2/config.cmake)
-
 add_executable (link_server 
 	link/src/server/main.cpp
 )
 
 target_include_directories (link_server PUBLIC
-	${CMAKE_SOURCE_DIR}/extern/argtable2/src
+	PRIVATE
 	link/src/core
 )
-
-target_link_libraries(link_server link_core link_common argtable2)
-
-if(ENABLE_TEST)
-	#  add_subdirectory (link/test)
-endif(ENABLE_TEST)
-
 #
+target_link_libraries(link_server PRIVATE link_core link_common tinyxml2 argtable2)
+
+#if(ENABLE_TEST)
+#	 add_subdirectory (link/test)
+#endif(ENABLE_TEST)
+
+##
 # various plugins to be used with link.
 #
 add_subdirectory (plugins)
-
-install(TARGETS link_common link_core link_plugin
-	DESTINATION ${INSTALL_LIB_DIR}
-	EXPORT ${TARGET_EXPORT_NAME}
+#[[
+install(TARGETS 
+	link_common 
+	link_core 
+	link_plugin 
+	EXPORT link_targets
+	LIBRARY DESTINATION ${INSTALL_LIB_DIR}
+	ARCHIVE DESTINATION ${INSTALL_LIB_DIR}
 )
 
-install(TARGETS link_server
-	DESTINATION ${INSTALL_BIN_DIR}
-	EXPORT ${TARGET_EXPORT_NAME}
-)
+install(EXPORT link_targets
+	FILE LinkTargets.cmake
+	NAMESPACE link::
+	DESTINATION lib/cmake/link
+)	
 
-export(PACKAGE link)
+#install(TARGETS link_server EXPORT link_targets
+#RUNTIME DESTINATION ${INSTALL_BIN_DIR}
+#)
 
-install(DIRECTORY link/include/
-	DESTINATION ${INSTALL_INCLUDE_DIR}
+include(CMakePackageConfigHelpers)
+write_basic_package_version_file("../LinkConfigVersion.cmake"
+	VERSION ${link_VERSION}
+	COMPATIBILITY SameMajorVersion
+)	
+
+install(FILES "LinkConfig.cmake" "LinkVersionConfig.cmake"
+	DESTINATION lib/cmake/link
 )
+]]
+#export(PACKAGE link)
 
 # project hierarchy:
 # - Link
@@ -181,28 +203,29 @@ install(DIRECTORY link/include/
 #   +- pluginsrc    = plugin source files, compiled into shared object.
 #   +- test         = plugin tests.
 
-
 #########################
-
+if(NOT CMAKE_GENERATOR MATCHES "Xcode")
 execute_process(COMMAND curl ifconfig.co OUTPUT_VARIABLE HOSTNAME OUTPUT_STRIP_TRAILING_WHITESPACE)
-
 file(GENERATE OUTPUT config/link.txt CONTENT 
 "<link runtime=\"0\" hostname=\"${HOSTNAME}\">
-  <plugin path=\"$<TARGET_FILE:gate>\">
-    <config>
-      <gate port=\"0\" max_connections=\"5\"/>
-    </config>
-  </plugin>
-  <plugin path=\"$<TARGET_FILE:directory>\">
-  </plugin>
-  <plugin path=\"$<TARGET_FILE:rest>\">
-  </plugin>
-  <plugin path=\"$<TARGET_FILE:launcher>\">
-  </plugin>
-  <plugin path=\"$<TARGET_FILE:monitor>\">
-    <config>
-      <punch port=\"0\" hostname=\"${HOSTNAME}\"/>
-    </config>
-  </plugin>
+	<plugin path=\"$<TARGET_FILE:gate>\">
+		<config>
+			<gate port=\"0\" max_connections=\"5\">
+				<redis hostname=\"localhost\" port=\"6379\"/>
+			</gate>
+		</config>
+	</plugin>
+	<plugin path=\"$<TARGET_FILE:directory>\">
+	</plugin>
+	<plugin path=\"$<TARGET_FILE:rest>\">
+	</plugin>
+	<plugin path=\"$<TARGET_FILE:launcher>\">
+	</plugin>
+	<plugin path=\"$<TARGET_FILE:monitor>\">
+		<config>
+			<punch port=\"0\" hostname=\"${HOSTNAME}\"/>
+		</config>
+	</plugin>
 </link>
 ")
+endif()

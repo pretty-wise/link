@@ -1,10 +1,4 @@
 include(${CMAKE_SOURCE_DIR}/utils/utils.cmake)
-include(${CMAKE_SOURCE_DIR}/extern/jsmn/config.cmake)
-include(${CMAKE_SOURCE_DIR}/extern/tinyxml2/config.cmake)
-
-include_directories (
-  ${CMAKE_SOURCE_DIR}/plugins/rest/include
-)
 
 set( SOURCES
   pluginsrc/launcher.h
@@ -18,10 +12,10 @@ set (SOURCES ${SOURCES}
 endif()
 
 plugin_framework(launcher ${SOURCES})
-target_link_libraries (launcher 
+target_link_libraries (launcher PRIVATE
 	rest_client 
 	link_plugin 
-	jsmn 
+	link_common
 	tinyxml2 
 )
 

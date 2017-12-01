@@ -15,7 +15,7 @@ function (plugin_framework PLUGIN_NAME)
     ${SRC_LIST}
     ${FRAMEWORK_SRC}
   )
-  target_link_libraries (${PLUGIN_NAME} link_plugin)
+  target_link_libraries (${PLUGIN_NAME} PRIVATE link_plugin)
 endfunction (plugin_framework)
 
 #
@@ -29,4 +29,4 @@ add_subdirectory(launcher)
 #add_subdirectory(udp_node)
 add_subdirectory(gate)
 add_subdirectory(matchmaker)
-add_subdirectory(punch)
+#add_subdirectory(punch)

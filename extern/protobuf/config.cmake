@@ -1,5 +1,3 @@
-include_directories (${CMAKE_SOURCE_DIR}/extern/protobuf/src)
-
 #function(compile_proto output)
 function(compile_proto output base_path)
 	set(GENERATED_CPP_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated/cpp)

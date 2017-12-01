@@ -425,7 +425,7 @@ void InitShutdownFunctions() {
   shutdown_functions_mutex = new Mutex;
 }
 
-inline void InitShutdownFunctionsOnce() {
+void InitShutdownFunctionsOnce() {
   GoogleOnceInit(&shutdown_functions_init, &InitShutdownFunctions);
 }
 
