@@ -1,7 +1,6 @@
 include(${CMAKE_SOURCE_DIR}/utils/utils.cmake)
 
 compile_proto(PROTOCOL 
-	""
 	protocol/gate.proto
 )
 
@@ -24,6 +23,7 @@ target_link_libraries (gate PRIVATE link_plugin link_common rest_client tinyxml2
 
 target_include_directories(gate PRIVATE
 	$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/plugins/gate/include>
+	$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/generated/cpp>
 )
 
 #
@@ -41,6 +41,7 @@ target_link_libraries (gate_client PRIVATE link_common protobuf)
 
 target_include_directories(gate_client PRIVATE
 	$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/plugins/gate/include>
+	$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/generated/cpp>
 )
 
 

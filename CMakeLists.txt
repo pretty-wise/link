@@ -103,6 +103,7 @@ target_include_directories(link_core
 	$<INSTALL_INTERFACE:${CMAKE_SOURCE_DIR}/link/include>
 	PRIVATE
 	$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/link/src/common>
+	$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/generated/cpp/link/src/core>
 )
 
 target_link_libraries (link_core PUBLIC Base::Base link_common PRIVATE tinyxml2 protobuf)

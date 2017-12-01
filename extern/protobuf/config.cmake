@@ -1,7 +1,5 @@
-#function(compile_proto output)
-function(compile_proto output base_path)
+function(compile_proto output)
 	set(GENERATED_CPP_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated/cpp)
-  include_directories(${GENERATED_CPP_OUTPUT_DIR}/${base_path})
   foreach(FILENAME ${ARGN})
     get_filename_component(FILE_NAME ${FILENAME} NAME_WE)
     get_filename_component(FILE_DIR ${FILENAME} PATH)

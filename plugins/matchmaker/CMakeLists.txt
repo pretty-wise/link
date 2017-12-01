@@ -1,7 +1,6 @@
 include(${CMAKE_SOURCE_DIR}/utils/utils.cmake)
 
 compile_proto(PROTOCOL 
-	""
 	protocol/matchmaker.proto
 )
 
@@ -20,6 +19,7 @@ target_link_libraries (matchmaker PRIVATE link_plugin link_common rest_client ti
 
 target_include_directories(matchmaker PRIVATE
 	$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/plugins/matchmaker/include>
+	$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/generated/cpp>
 )
 
 #
@@ -38,6 +38,7 @@ target_link_libraries (matchmaker_client PRIVATE link_common protobuf)
 
 target_include_directories(matchmaker_client PRIVATE
 	$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/plugins/matchmaker/include>
+	$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/generated/cpp>
 )
 
 if(ENABLE_TEST)
