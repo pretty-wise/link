@@ -1,5 +1,41 @@
-=== CONFING FILE FORMAT ===
+Link
+====
 
+# Features
+# Installation
+# Requirements
+# Project Structure
+```
+.
++- extern
++- common
+|  +- include
+|  +- src
++- link
+|  +- include
+|  +- src
+|  |  +- common
+|  |  +- core
+|  |  +- plugin
+|  |  +- server
++- plugins
+|  +- common
+|  +- directory
+|  +- gate
+|  |  +- clientsrc
+|  |  +- pluginsrc
+|  |  +- commonsrc
+|  |  +- include
+|  +- launcher
+|  +- monitor
+|  +- punch
+|  +- rest
+```
+# Usage
+# Configuration
+# Dependencies
+# License
+# Examples
 ## Test with `tesme`
 
 1. first
