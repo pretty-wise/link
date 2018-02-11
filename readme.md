@@ -51,7 +51,7 @@ struct s {
 };
 ```
 ## License
-> Copyright (c) 2018, Krzysiek
+> Copyright (c) 2018, Krzysztof Stasik
 > All rights reserved.
 > 
 > Redistribution and use in source and binary forms, with or without
