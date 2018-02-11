@@ -3,7 +3,18 @@ Link
 
 # Features
 # Installation
+```
+git clone git@github.com:pretty-wise/base.git
+mkdir base/build
+cd base/build
+cmake ..
+make
+make install
+```
 # Requirements
+- Mac OS
+# Dependencies
+* Base library
 # Project Structure
 ```
 .
@@ -17,7 +28,7 @@ Link
 |  |  +- common
 |  |  +- core
 |  |  +- plugin
-|  |  +- server
+|  |  +- server <- server executable
 +- plugins
 |  +- common
 |  +- directory
@@ -33,7 +44,6 @@ Link
 ```
 # Usage
 # Configuration
-# Dependencies
 # License
 # Examples
 ## Test with `tesme`
