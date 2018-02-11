@@ -2,6 +2,7 @@ Link
 ====
 
 # Features
+# Configuration
 # Installation
 ```
 git clone git@github.com:pretty-wise/base.git
@@ -14,7 +15,6 @@ make install
 # Requirements
 - Mac OS 10.13
 # Dependencies
-- Base library
 - [Base](https://github.com/pretty-wise/base) library
 # Project Structure
 ```
@@ -44,11 +44,10 @@ make install
 |  +- rest
 ```
 # Usage
-# Configuration
-# License
 # Examples
 ```code
 struct s {
 	int m;
 };
 ```
+# License
