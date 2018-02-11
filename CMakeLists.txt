@@ -34,7 +34,7 @@ add_subdirectory(extern)
 #
 project(link_common)
 
-set (SOURCES
+add_library (link_common 
   common/include/common/json/json_writer.h
   common/src/json/json_writer.cpp
   common/include/common/json/json_reader.h
@@ -45,8 +45,6 @@ set (SOURCES
 	common/include/common/tcp_server.h
 	common/src/tcp_server.cpp
 )
-
-add_library (link_common ${SOURCES})
 
 target_include_directories(link_common 
 	PUBLIC
