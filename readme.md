@@ -1,8 +1,8 @@
 Link
 ====
 
-# Features
-# Configuration
+## Features
+### Configuration
 # Installation
 ```
 git clone git@github.com:pretty-wise/base.git
