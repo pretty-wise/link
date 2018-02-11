@@ -4,14 +4,27 @@ Link
 ## Features
 ## Configuration
 ## Installation
+
+Install Base library.
+
 ```
-git clone git@github.com:pretty-wise/base.git
+git clone https://github.com/pretty-wise/base.git
 mkdir base/build
 cd base/build
 cmake ..
-make
 make install
 ```
+
+Install Google Test framework:
+
+```
+git clone https://github.com/google/googletest.git
+mkdir googletest/build
+cd googletest/build
+cmake ..
+make install
+```
+
 ## Requirements
 - Mac OS 10.13
 ## Dependencies
