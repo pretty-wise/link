@@ -12,9 +12,10 @@ make
 make install
 ```
 # Requirements
-- Mac OS
+- Mac OS 10.13
 # Dependencies
-* Base library
+- Base library
+- [Base](https://github.com/pretty-wise/base) library
 # Project Structure
 ```
 .
@@ -46,36 +47,8 @@ make install
 # Configuration
 # License
 # Examples
-## Test with `tesme`
-
-1. first
-2. second
-3. third
-
 ```code
-class C {
+struct s {
 	int m;
 };
 ```
-
-Header
-======
-
-### three
-
-con
-
-## two
-
-tent
-
-# one
-
-link goes [here](https://google.com/).
---config==
-
-<link runtime="5000">
-	<plugin path="">
-		<config/>
-	</plugin>
-</link>
