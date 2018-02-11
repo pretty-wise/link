@@ -123,6 +123,8 @@ target_link_libraries (link_plugin PUBLIC Base::Base)
 
 target_include_directories(link_plugin PRIVATE 
 	$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/link/src/common>
+	PUBLIC
+	$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/link/include>
 )
 
 #
