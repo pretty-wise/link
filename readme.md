@@ -33,23 +33,23 @@ make install
 ```
 .
 +- extern
-+- common
++- common 			<- utility code shared between server and plugins
 |  +- include
 |  +- src
 +- link
 |  +- include
 |  +- src
-|  |  +- common
-|  |  +- core
-|  |  +- plugin
+|  |  +- common <- plugin interface shared between server and plugins
+|  |  +- core   <- server core code
+|  |  +- plugin <- plugin interface code
 |  |  +- server <- server executable
-+- plugins
++- plugins			<- server plugins
 |  +- common
 |  +- directory
 |  +- gate
-|  |  +- clientsrc
-|  |  +- pluginsrc
-|  |  +- commonsrc
+|  |  +- clientsrc <- interface static library, used by other plugins
+|  |  +- pluginsrc <- plugin shared object
+|  |  +- commonsrc <- code shared between client interface and plugin
 |  |  +- include
 |  +- launcher
 |  +- monitor
@@ -57,6 +57,15 @@ make install
 |  +- rest
 ```
 ## Usage
+## Testing
+
+Link uses Google Test Framework. It comes with a suite of tests covering the core server functionality. Plugins come with their own tests.
+
+To run the tests first build the project. After the project is build execute the following command in the build folder:
+```
+make test
+```
+
 ## Examples
 ```code
 struct s {
