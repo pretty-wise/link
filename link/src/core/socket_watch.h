@@ -4,6 +4,7 @@
 #pragma once
 
 #include "base/core/types.h"
+#include "base/network/socket.h"
 #include "link/link.h"
 
 #include <unistd.h>
@@ -15,15 +16,18 @@ class TcpSocket;
 
 class SocketWatch {
 public:
-	SocketWatch(u32 num_sockets);
-	~SocketWatch();
+  SocketWatch(u32 num_sockets);
+  ~SocketWatch();
 
-	bool Wait(time_ms timeout, std::function<void (ConnectionHandle connection, bool read,	bool write, bool error)> func);
+  bool Wait(time_ms timeout,
+            std::function<void(ConnectionHandle connection, bool read,
+                               bool write, bool error)>
+                func);
 
-	//bool Register(const TcpSocket& socket, ConnectionHandle handle);
+  bool Register(Base::Socket::Handle, ConnectionHandle handle);
 
 private:
-	int m_kqueue;
+  int m_kqueue;
 };
 
 } // namespace Link

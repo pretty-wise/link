@@ -51,6 +51,16 @@ Header *GetNextHeader(Header *cur, s8 *buffer_beg, s8 *buffer_end) {
   return next_header;
 }
 
+streamsize BytesAvailable(s8 *start, s8 *end, s8 *read, s8 *write) {
+  if(read == write) {
+    return end - start - 1;
+  }
+  if(read < write) {
+    return (end - write) + (read - start) - 1;
+  }
+  return read - write - 1;
+}
+
 } // anonymous namespace
 
 MessageInStream::MessageInStream(streamsize nbytes)
@@ -83,6 +93,7 @@ Result MessageInStream::Read(void *buffer, streamsize nbytes,
   }
 
   // content pointer has to be valid, because m_num_messages > 0.
+  BASE_ASSERT(message->size > 0);
   s8 *content = GetContent(message, m_buffer_start, m_buffer_end);
 
   memcpy(buffer, content, message->size);
@@ -105,21 +116,46 @@ MessageInStream::Process(Base::Socket::Handle socket) {
   }
 
   do {
+    // read header
+    streamsize avail =
+        BytesAvailable(m_buffer_start, m_buffer_end, m_read, m_write);
+    if(avail < m_header_bytes_expected) {
+      return RS_WOULDBLOCK; // not enough memory, need to read first
+    }
+
+    u32 check_size = 0;
+    if(m_num_messages > 0) {
+      Header *message = reinterpret_cast<Header *>(m_read);
+      check_size = message->size;
+    }
+
     while(m_header_bytes_expected > 0) {
       streamsize bytes_read = Base::Socket::Tcp::Recv(
           socket, m_write, m_header_bytes_expected, &error);
+
       STREAM_LOG(
           "recv on socket %d read %dbytes (header) bytes left: %d. error: %d.",
           socket, bytes_read, m_header_bytes_expected - bytes_read,
           bytes_read == -1 ? errno : 0);
+
       if(bytes_read == -1 && error == EWOULDBLOCK) {
-        return RS_WOULDBLOCK; // nothing to read.
+        return RS_WOULDBLOCK; // nothing to read
       } else if(bytes_read == 0) {
-        return RS_EOF;
+        return RS_EOF; // socket closed
       } else if(bytes_read == -1) {
         STREAM_LOG("recv error on socket %d: %d.", socket, error);
+        // invalidating internal state
+        m_header_bytes_expected = 0;
+        m_message_bytes_expected = 0;
+        return RS_ERROR;
       }
 
+      if(check_size > 0) {
+        Header *message = reinterpret_cast<Header *>(m_read);
+        BASE_ASSERT(check_size == message->size);
+      }
+
+      BASE_ASSERT(m_write + bytes_read <= m_buffer_end, "buffer overflow");
       m_write += bytes_read;
       m_header_bytes_expected -= bytes_read;
 
@@ -127,6 +163,7 @@ MessageInStream::Process(Base::Socket::Handle socket) {
         // just read header. fixup data pointer.
         Header *message = reinterpret_cast<Header *>(m_write - sizeof(Header));
         message->size = Base::NetToHostL(message->size);
+        BASE_ASSERT(message->size > 0, "message size must be positive");
 
         m_cur_header = message;
         m_message_bytes_expected = message->size;
@@ -142,7 +179,19 @@ MessageInStream::Process(Base::Socket::Handle socket) {
       }
     }
 
+    // read message
     while(m_message_bytes_expected > 0) {
+      streamsize avail =
+          BytesAvailable(m_buffer_start, m_buffer_end, m_read, m_write);
+      Header *next_header =
+          GetNextHeader(m_cur_header, m_buffer_start, m_buffer_end);
+      if(avail < m_message_bytes_expected ||
+         reinterpret_cast<s8 *>(next_header) == m_read) {
+        // todo(kstasik): check if we are not trying to read a message that will
+        // never fit the buffer
+        return RS_WOULDBLOCK; // not enough memory, need to read first
+      }
+
       streamsize bytes_read = Base::Socket::Tcp::Recv(
           socket, m_write, m_message_bytes_expected, &error);
       STREAM_LOG("recv on socket %d read %dbytes (message) bytes left: %d.",
@@ -153,17 +202,29 @@ MessageInStream::Process(Base::Socket::Handle socket) {
         return RS_EOF;
       } else if(bytes_read == -1) {
         STREAM_LOG("recv error on socket %d: %d.", socket, error);
+        m_header_bytes_expected = 0;
+        m_message_bytes_expected = 0;
+        return RS_ERROR;
       }
 
+      if(check_size > 0) {
+        Header *message = reinterpret_cast<Header *>(m_read);
+        BASE_ASSERT(check_size == message->size);
+      }
+
+      BASE_ASSERT(m_write + bytes_read <= m_buffer_end, "buffer overflow");
       m_write += bytes_read;
 
       m_message_bytes_expected -= bytes_read;
       if(m_message_bytes_expected == 0) {
         // just read data. fixup header pointer.
         m_total_msg_size += m_cur_header->size;
+        BASE_ASSERT(m_cur_header->size > 0, "message cannot be empty");
 
         m_cur_header =
             GetNextHeader(m_cur_header, m_buffer_start, m_buffer_end);
+        BASE_ASSERT(m_read != reinterpret_cast<s8 *>(m_cur_header),
+                    "buffer closed");
         m_write = reinterpret_cast<s8 *>(m_cur_header);
         // todo: check if m_cur_header does not write after m_read.
         if(!CanWrite(m_write, m_write + sizeof(Header))) {
@@ -181,7 +242,7 @@ MessageInStream::Process(Base::Socket::Handle socket) {
 
   // not reached.
   return RS_ERROR;
-}
+} // namespace Link
 
 unsigned int MessageInStream::TotalMessageSize() const {
   return m_total_msg_size;
@@ -197,10 +258,10 @@ unsigned int MessageInStream::NextMessageSize() const {
 }
 
 bool MessageInStream::CanWrite(s8 *beg, s8 *end) const {
-  // BASE_ASSERT(beg >= m_buffer_start, "invald buffer start %p/%p", beg,
-  // m_buffer_start);
-  // BASE_ASSERT(end <= m_buffer_end, "invalid buffer end %p/%p", end,
-  // m_buffer_end);
+  /*BASE_ASSERT(beg >= m_buffer_start, "invald buffer start %p/%p", beg,
+              m_buffer_start);
+  BASE_ASSERT(end < m_buffer_end, "invalid buffer end %p/%p", end,
+              m_buffer_end);*/
 
   if(beg < m_buffer_start || end > m_buffer_end) {
     return false; // stream might have received corrupted data.
@@ -238,7 +299,7 @@ streamsize MessageOutStream::GetBytesFree() const {
 
 void MessageOutStream::WriteData(s8 *buffer, streamsize nbytes) {
   if((m_write >= m_read) && (m_buffer_end - m_write < nbytes)) {
-    // two party write
+    // two part write
     if(m_buffer_end - m_write > 0) { // m_write might be at m_buffer_end
       memcpy(m_write, buffer, m_buffer_end - m_write);
     }

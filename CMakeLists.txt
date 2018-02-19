@@ -15,20 +15,6 @@ find_package(Base REQUIRED)
 
 add_subdirectory(extern)
 
-#target_include_directories(link PUBLIC
-#	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/common/include>
-#	$<INSTALL_INTERFACE:common/include>
-#	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/link/src/common>
-#	$<INSTALL_INTERFACE:link/src/common>
-#	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/link/include>
-#	$<INSTALL_INTERFACE:link/include>
-#)
-
-#target_include_directories(link PRIVATE
-#	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}link/src/common>
-#	$<INSTALL_INTERFACE:link/src/common>
-#)
-
 #
 # common code for link and plugins. mostly utilities.
 #
@@ -107,7 +93,7 @@ target_include_directories(link_core
 target_link_libraries (link_core PUBLIC Base::Base link_common PRIVATE tinyxml2 protobuf)
 
 #
-#
+# plugin core library
 #
 project (link_plugin)
 
@@ -126,7 +112,7 @@ target_include_directories(link_plugin PRIVATE
 )
 
 #
-#
+# server executable
 #
 project (link_server)
 
@@ -141,14 +127,20 @@ target_include_directories (link_server PUBLIC
 #
 target_link_libraries(link_server PRIVATE link_core link_common tinyxml2 argtable2)
 
-#if(ENABLE_TEST)
-#	 add_subdirectory (link/test)
-#endif(ENABLE_TEST)
-
 ##
 # various plugins to be used with link.
 #
 add_subdirectory (plugins)
+
+#
+# tests
+#
+enable_testing()
+add_subdirectory(testing)
+
+#
+# install the library
+#
 #[[
 install(TARGETS 
 	link_common 
@@ -165,10 +157,6 @@ install(EXPORT link_targets
 	DESTINATION lib/cmake/link
 )	
 
-#install(TARGETS link_server EXPORT link_targets
-#RUNTIME DESTINATION ${INSTALL_BIN_DIR}
-#)
-
 include(CMakePackageConfigHelpers)
 write_basic_package_version_file("../LinkConfigVersion.cmake"
 	VERSION ${link_VERSION}
@@ -179,35 +167,15 @@ install(FILES "LinkConfig.cmake" "LinkVersionConfig.cmake"
 	DESTINATION lib/cmake/link
 )
 ]]
-#export(PACKAGE link)
 
-# project hierarchy:
-# - Link
-# +- common         = common code for code and plugins, compiled into LinkCommon lib.
-# +- link           = server code
-# |+- include
-# ||+- link
-# |+- src
-# ||+- common       = code shared between server core and plugin interface.
-# ||+- core         = server core code, compiled into link_core lib.
-# ||+- server       = server code app, compiled into link_server app.
-# ||+- plugin       = plugin interface code, compiled into LinkPlugin lib.
-# |+- test          = various server core tests.
-# | +- plugins      = plugin test code.
-# +- plugins        = plugins.
-#  +- common
-#  +- pluginname    = source code of a single plugin.
-#   +- include      = client header files, to be used by other plugins.
-#   |+- plugin
-#   | +- pluginname
-#   +- clientsrc    = client source files, compiled into static lib, to be used by other plugins.
-#   +- pluginsrc    = plugin source files, compiled into shared object.
-#   +- test         = plugin tests.
-
-#########################
+#
+# generating sample config file
+#
 if(NOT CMAKE_GENERATOR MATCHES "Xcode")
-execute_process(COMMAND curl ifconfig.co OUTPUT_VARIABLE HOSTNAME OUTPUT_STRIP_TRAILING_WHITESPACE)
-file(GENERATE OUTPUT config/link.txt CONTENT 
+  execute_process(COMMAND curl ifconfig.co 
+		OUTPUT_VARIABLE HOSTNAME 
+		OUTPUT_STRIP_TRAILING_WHITESPACE)
+  file(GENERATE OUTPUT config/link.txt CONTENT 
 "<link runtime=\"0\" hostname=\"${HOSTNAME}\">
 	<plugin path=\"$<TARGET_FILE:gate>\">
 		<config>
