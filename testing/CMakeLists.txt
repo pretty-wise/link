@@ -1,6 +1,10 @@
 
 find_package(Gtest REQUIRED)
 
+#
+# general
+#
+
 add_executable(test_gtest "general/test_gtest.cpp")
 target_link_libraries(test_gtest PRIVATE ${GTEST_BOTH_LIBRARIES})
 target_include_directories(test_gtest PUBLIC
@@ -46,3 +50,14 @@ target_include_directories(test_socket_watch PUBLIC
 $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/link/src/core>
 )
 add_test(NAME test_socket_watch COMMAND $<TARGET_FILE:test_socket_watch>)
+
+#
+# link
+#
+
+add_executable(test_startup "link/test_startup.cpp")
+target_link_libraries(test_startup PRIVATE ${GTEST_LIBRARIES} base)
+target_include_directories(test_startup PUBLIC
+	${GTEST_INCLUDE_DIRS}
+)
+add_test(NAME test_startup COMMAND $<TARGET_FILE:test_startup> $<TARGET_FILE:link_server>)
