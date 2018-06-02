@@ -16,30 +16,51 @@ TEST(PluginWatch, CreateFilterRemove) {
 
   Link::WatchManager watch;
 
-  WatchHandle watch_A = watch.Create(kPluginName, kPluginVersion, kHostname);
-  ASSERT_TRUE(watch_A);
-
   std::vector<WatchHandle> results;
 
-  watch.Filter(kPluginName, kPluginVersion, kHostname, results);
-  ASSERT_TRUE(results.size() == 1 && results[0] == watch_A);
+  {
+    WatchHandle exactMatch =
+        watch.Create(kPluginName, kPluginVersion, kHostname);
+    ASSERT_TRUE(exactMatch);
 
-  watch.Filter(kPluginName, "*", kHostname, results);
-  ASSERT_TRUE(results.size() == 1 && results[0] == watch_A);
+    watch.Filter(kPluginName, kPluginVersion, kHostname, results);
+    ASSERT_TRUE(results.size() == 1 && results[0] == exactMatch);
 
-  watch.Filter("*", kPluginVersion, kHostname, results);
-  ASSERT_TRUE(results.size() == 1 && results[0] == watch_A);
+    watch.Remove(exactMatch);
+  }
 
-  watch.Filter("*", "version_mismatch", kHostname, results);
-  ASSERT_TRUE(results.empty());
+  {
+    WatchHandle anyVersionMatch = watch.Create(kPluginName, "*", kHostname);
+    ASSERT_TRUE(anyVersionMatch);
 
-  watch.Filter(kPluginName, "version_mismatch", kHostname, results);
-  ASSERT_TRUE(results.empty());
+    watch.Filter(kPluginName, kPluginVersion, kHostname, results);
+    ASSERT_TRUE(results.size() == 1 && results[0] == anyVersionMatch);
 
-  watch.Filter("name_mismatch", kPluginVersion, kHostname, results);
-  ASSERT_TRUE(results.empty());
+    watch.Remove(anyVersionMatch);
+  }
 
-  watch.Remove(watch_A);
-  watch.Filter(kPluginName, kPluginVersion, kHostname, results);
+  {
+    WatchHandle anyNameMatch = watch.Create("*", kPluginVersion, kHostname);
+    ASSERT_TRUE(anyNameMatch);
+
+    watch.Filter(kPluginName, kPluginVersion, kHostname, results);
+    ASSERT_TRUE(results.size() == 1 && results[0] == anyNameMatch);
+
+    watch.Remove(anyNameMatch);
+  }
+
+  {
+    WatchHandle versionMismatch =
+        watch.Create("*", "versionmismatch", kHostname);
+    ASSERT_TRUE(versionMismatch);
+
+    watch.Filter(kPluginName, kPluginVersion, kHostname, results);
+    ASSERT_TRUE(results.empty());
+
+    watch.Remove(versionMismatch);
+  }
+
+  // empty check
+  watch.Filter("*", "*", "*", results);
   ASSERT_TRUE(results.empty());
 }
