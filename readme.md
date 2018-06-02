@@ -68,8 +68,8 @@ make test
 
 ## Examples
 ```code
-struct s {
-	int m;
+struct todo_examples {
+	int this_is_wip_doc;
 };
 ```
 ## License

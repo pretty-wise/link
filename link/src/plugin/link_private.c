@@ -1,14 +1,18 @@
 #include "link/link.h"
 #include "link_private.h"
 
+// Plugin storage for link_core interface functions
 static struct LinkInterface s_interface;
 
 /// If any of those symbols cannot be found by core, that means you don't
 /// call any of those functions from your plugin, which makes compiler
 /// strip those from shared object.
 
+/// Below functions are used by plugins to call link_core exposed functions.
+
 int GetInterfaceVersion() { return LINK_INTERFACE_VERSION; }
 
+// Called by link_core to expose the interface and start the plugin.
 int StartupPlugin(struct LinkInterface *iface, const char *config,
                   streamsize nbytes) {
   s_interface = *iface;
