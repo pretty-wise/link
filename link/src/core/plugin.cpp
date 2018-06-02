@@ -131,7 +131,7 @@ bool Plugin::Start(const LinkConfiguration &configuration) {
       return false;
     }
 
-    LINK_INFO("plugin %s(%s) listening on port %d", Name(), Version(), port);
+    LINK_INFO("starting plugin %s(%s)", Name(), Version());
 
     PluginInfo info;
     Base::String::strncpy(info.hostname, configuration.hostname,
@@ -146,35 +146,39 @@ bool Plugin::Start(const LinkConfiguration &configuration) {
     m_configuration = configuration;
     memcpy(&m_configuration.info, &info, sizeof(PluginInfo));
 
-    LINK_INFO("** plugin %s configuration:", m_configuration.info.name);
+    LINK_INFO("********************************");
+    LINK_INFO(" * name: %s", m_configuration.info.name);
     LINK_INFO(" * version %s", m_configuration.info.version);
     LINK_INFO(" * hostname: %s", m_configuration.hostname);
     LINK_INFO(" * port: %d", m_configuration.info.port);
     LINK_INFO(" * pid: %d", m_configuration.info.pid);
+    LINK_INFO("********************************");
 
     int result =
         m_remote_call.Startup(&iface, m_config_data, m_config_data_size);
     m_started = result == 0;
 
-    if(result == 0) {
+    if(!m_started) {
+      LINK_WARN("failed to start plugin %s(%s)", Name(), Version());
+      return false;
+    }
 
-      m_handle = m_plugin_directory.GenerateHandle(info);
-      m_connections.Initialize(m_handle);
+    m_handle = m_plugin_directory.GenerateHandle(info);
+    m_connections.Initialize(m_handle);
 
-      bool registered = m_plugin_directory.Register(m_handle, info);
+    bool registered = m_plugin_directory.Register(m_handle, info);
 
-      LINK_INFO("plugin %s(%s) registered as %p.", Name(), Version(), m_handle);
+    LINK_INFO("plugin %s(%s) handle assigned: %p.", Name(), Version(),
+              m_handle);
 
-      if(!registered) {
-        NotifyShutdown(ShutdownNotification::kStop);
-        m_remote_call.Shutdown();
-        m_started = false;
-      }
-
-      return m_started;
+    if(!registered) {
+      NotifyShutdown(ShutdownNotification::kStop);
+      m_remote_call.Shutdown();
+      m_started = false;
+      return false;
     }
   }
-  return false;
+  return true;
 }
 
 const char *Plugin::Name() const { return m_remote_call.GetName(); }
