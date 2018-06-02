@@ -48,9 +48,9 @@ void WatchManager::Filter(const char *plugin_name, const char *plugin_version,
   Base::MutexAutoLock lock(m_mutex);
   for(WatchList::const_iterator it = m_watches.begin(); it != m_watches.end();
       ++it) {
-    if(PluginDirectory::Match((*it).name_filter.c_str(), plugin_name) &&
-       PluginDirectory::Match((*it).version_filter.c_str(), plugin_version) &&
-       PluginDirectory::Match((*it).hostname_filter.c_str(), plugin_hostname)) {
+    if(PluginDirectory::Match(plugin_name, (*it).name_filter.c_str()) &&
+       PluginDirectory::Match(plugin_version, (*it).version_filter.c_str()) &&
+       PluginDirectory::Match(plugin_hostname, (*it).hostname_filter.c_str())) {
       handles.push_back((*it).handle);
     }
   }
