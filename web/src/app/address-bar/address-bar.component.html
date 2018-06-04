@@ -1,0 +1,11 @@
+Root: <input type="text" [(ngModel)]="currentRoot" placeholder="enter hostname"/> <button (click)="getCommandList()">Change</button>
+<p>Root: {{root}}</p>
+
+<hr>
+<p>Commands:</p>
+<ul>
+  <li *ngFor="let cmd of commands">{{cmd}}</li>
+</ul>
+
+<hr>
+<app-plugin-list [commands]="pluginListCommands"></app-plugin-list>

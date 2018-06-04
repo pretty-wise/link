@@ -55,6 +55,7 @@ make install
 |  +- monitor
 |  +- punch
 |  +- rest
++- web <- web control panel
 ```
 ## Usage
 ## Testing
@@ -65,7 +66,14 @@ To run the tests first build the project. After the project is build execute the
 ```
 make test
 ```
-
+## Web Control Panel
+```
+brew install node
+npm install -g @angular/cli
+cd web
+ng install
+ng serve --open
+```
 ## Examples
 ```code
 struct todo_examples {
