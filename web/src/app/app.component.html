@@ -1,6 +1,12 @@
 <div style="text-align:center">
   <h1>Welcome to {{ title }}!</h1>
+  <nav>
+      <a routerLink="/plugin-list">plugin list</a>
+      <a routerLink="/monitor">monitor</a>
+  </nav>
+  <hr>
   <app-address-bar></app-address-bar>
+  <hr>
 </div>
 
 <router-outlet></router-outlet>

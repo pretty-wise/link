@@ -1,0 +1,5 @@
+
+<p>Monitors:</p>
+<ul>
+  <li *ngFor="let monitor of monitors | async">{{monitor.name}} ({{monitor.version}}) hostname: {{monitor.hostname}} pid: {{monitor.pid}} version: {{monitor.version}}</li>
+</ul>

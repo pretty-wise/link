@@ -1,4 +1,4 @@
 <p>All plugins:</p>
 <ul>
-  <li *ngFor="let plugin of plugins">{{plugin.name}} ({{plugin.version}}) hostname: {{plugin.hostname}} pid: {{plugin.pid}} port: {{plugin.port}}</li>
+  <li *ngFor="let plugin of plugins | async">{{plugin.name}} ({{plugin.version}}) hostname: {{plugin.hostname}} pid: {{plugin.pid}} port: {{plugin.port}}</li>
 </ul>

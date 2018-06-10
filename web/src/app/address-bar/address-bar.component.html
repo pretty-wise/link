@@ -4,8 +4,5 @@ Root: <input type="text" [(ngModel)]="currentRoot" placeholder="enter hostname"/
 <hr>
 <p>Commands:</p>
 <ul>
-  <li *ngFor="let cmd of commands">{{cmd}}</li>
+  <li *ngFor="let cmd of commands | async">{{cmd}}</li>
 </ul>
-
-<hr>
-<app-plugin-list [commands]="pluginListCommands"></app-plugin-list>

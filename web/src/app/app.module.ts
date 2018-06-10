@@ -8,13 +8,15 @@ import { AppComponent } from './app.component';
 import { AddressBarComponent } from './address-bar/address-bar.component';
 import { NodeListComponent } from './node-list/node-list.component';
 import { PluginListComponent } from './plugin-list/plugin-list.component';
+import { MonitorComponent } from './monitor/monitor.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     AddressBarComponent,
     NodeListComponent,
-    PluginListComponent
+    PluginListComponent,
+    MonitorComponent
   ],
   imports: [
     BrowserModule,
