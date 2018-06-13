@@ -4,7 +4,7 @@ import { MonitorComponent } from './monitor/monitor.component';
 import { PluginListComponent } from './plugin-list/plugin-list.component';
 
 const routes: Routes = [
-  { path: 'monitor', component: MonitorComponent },
+  { path: 'monitor/:id', component: MonitorComponent },
   { path: 'plugin-list', component: PluginListComponent }
 ];
 

@@ -5,7 +5,6 @@ import { map, switchMap } from "rxjs/operators";
 import { HttpClient } from '@angular/common/http';
 import { ValueTransformer } from '@angular/compiler/src/util';
 
-
 export interface CommandListResponse {
   plugin: Plugin;
   commands: string[];
@@ -24,6 +23,7 @@ export class PluginService {
   constructor(
     private http: HttpClient) { }
 
+  hostname: string;
   commands: Observable<string[]>;
   plugins: Observable<Plugin[]>;
   monitors: Observable<Plugin[]>;
@@ -31,6 +31,9 @@ export class PluginService {
   COMMAND_LIST_URI: string = '/command-list';
   PLUGIN_LIST_URI: string = '/plugin-list';
 
+  getHostname() : string {
+    return this.hostname;
+  }
   getCommandList() : Observable<string[]> {
     return this.commands;
   }
@@ -55,6 +58,8 @@ export class PluginService {
   }
 
   refresh(hostname: string) : void {
+    this.hostname = hostname;
+    
     // fetch commands
     this.commands = this.http.get<CommandListResponse>(hostname + this.COMMAND_LIST_URI).pipe(
       map((response: CommandListResponse) => {
