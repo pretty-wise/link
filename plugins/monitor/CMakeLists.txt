@@ -7,10 +7,19 @@ include(${CMAKE_SOURCE_DIR}/utils/utils.cmake)
 set( SOURCES
   pluginsrc/monitor_plugin.h
   pluginsrc/monitor_plugin.cpp
-	pluginsrc/cpu_stats_linux.cpp
 )
 
-plugin_framework(monitor ${SOURCES})
+if(APPLE)
+	set( EXTRA_SOURCES
+		pluginsrc/cpu_stats_mac.cpp
+	)
+else()
+	set( EXTRA_SOURCES
+		pluginsrc/cpu_stats_linux.cpp
+	)
+endif()
+
+plugin_framework(monitor ${SOURCES} ${EXTRA_SOURCES})
 target_link_libraries (monitor rest_client link_plugin link_common)
 
 if(ENABLE_TEST)
