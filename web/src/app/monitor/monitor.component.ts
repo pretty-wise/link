@@ -84,8 +84,9 @@ export class MonitorComponent implements OnInit {
 
         if(this.data.labels.length > this.max_sample_count) {
           this.data.labels.shift();
-          this.data.series[0].data.shift();
-          this.data.series[1].data.shift();
+          for(var i = 0; i < this.data.series.length; ++i) {
+            this.data.series[i].data.shift();
+          }
         }
         this.chart.update(this.data);
       });
