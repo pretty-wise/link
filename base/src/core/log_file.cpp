@@ -5,9 +5,10 @@
 #include "base/io/base_file.h"
 #include "base/process/process.h"
 
+#include <stdio.h>
 #include <string.h>
-#include <vector>
 #include <algorithm>
+#include <vector>
 
 namespace Base {
 namespace Log {
