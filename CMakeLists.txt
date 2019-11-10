@@ -63,7 +63,7 @@ if(APPLE)
 	)
 elseif(UNIX)
 	set (BASE_NETWORK_FILES 
-  	${NETWORK_FILES}
+		${BASE_NETWORK_FILES}
   	base/src/network/epoll_linux.cpp
   )
 endif()
