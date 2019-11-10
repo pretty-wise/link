@@ -131,6 +131,8 @@ target_include_directories (base PUBLIC
 )
 target_include_directories (base PRIVATE src)
 
+target_link_libraries(base PUBLIC ${CMAKE_DL_LIBS})
+
 add_subdirectory(extern)
 
 #
