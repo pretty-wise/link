@@ -11,6 +11,7 @@ jobs:
     
     steps:
     - uses: actions/checkout@v1
+    - uses: CyberZHG/github-action-gtest@0.0.1
     - name: prepare
       run: cmake -E make_directory ${{runner.workspace}}/build
     - name: configure

@@ -28,7 +28,7 @@ make install
 ## Requirements
 - Mac OS 10.13
 ## Dependencies
-- [Base](https://github.com/pretty-wise/base) library
+- None
 ## Project Structure
 
 ```
