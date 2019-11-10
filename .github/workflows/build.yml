@@ -20,7 +20,7 @@ jobs:
         cd ${{runner.workspace}}/googletest/build
         cmake ..
         make
-        make install
+        sudo make install
         cd ${{runner.workspace}}
         export GTEST_DIR="${{runner.workspace}}/googletest/googletest/" GTEST_LIB_DIR="${{runner.workspace}}/googletest/build/lib/"
     - name: prepare
