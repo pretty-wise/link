@@ -11,7 +11,18 @@ jobs:
     
     steps:
     - uses: actions/checkout@v1
-    - uses: CyberZHG/github-action-gtest@0.0.1
+    - name: install gtest
+      run: |
+        wget https://github.com/google/googletest/archive/master.zip
+        unzip master.zip
+        mv googletest-master /googletest
+        mkdir -p /googletest/build
+        cd /googletest/build
+        cmake ..
+        make
+        make install
+        cd /
+        export GTEST_DIR="/googletest/googletest/" GTEST_LIB_DIR="/googletest/build/lib/"
     - name: prepare
       run: cmake -E make_directory ${{runner.workspace}}/build
     - name: configure
