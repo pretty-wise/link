@@ -15,14 +15,14 @@ jobs:
       run: |
         wget https://github.com/google/googletest/archive/master.zip
         unzip master.zip
-        mv googletest-master /googletest
-        mkdir -p /googletest/build
-        cd /googletest/build
+        mv googletest-master ${{runner.workspace}}/googletest
+        mkdir -p ${{runner.workspace}}/googletest/build
+        cd ${{runner.workspace}}/googletest/build
         cmake ..
         make
         make install
-        cd /
-        export GTEST_DIR="/googletest/googletest/" GTEST_LIB_DIR="/googletest/build/lib/"
+        cd ${{runner.workspace}}
+        export GTEST_DIR="${{runner.workspace}}/googletest/googletest/" GTEST_LIB_DIR="${{runner.workspace}}/googletest/build/lib/"
     - name: prepare
       run: cmake -E make_directory ${{runner.workspace}}/build
     - name: configure
