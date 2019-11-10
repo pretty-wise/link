@@ -243,7 +243,7 @@ target_include_directories (link_server PUBLIC
 	link/src/core
 )
 #
-target_link_libraries(link_server PRIVATE link_core link_common tinyxml2 argtable2)
+target_link_libraries(link_server PRIVATE ${CMAKE_DL_LIBS} link_core link_common tinyxml2 argtable2)
 
 ##
 # various plugins to be used with link.
