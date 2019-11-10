@@ -1,6 +1,8 @@
 name: C/C++ CI
 
 on: [push]
+env: 
+  BUILD_TYPE: Debug
 
 jobs:
   build:
@@ -10,9 +12,10 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - name: prepare
-      run: mkdir build && cd build
+      run: cmake -E make_directory ${{runner.workspace}}/build
     - name: configure
-      run: cmake ..
+      working-directory: ${{runner.workspace}}/build
+      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE
     - name: make
       run: make
     - name: make check
