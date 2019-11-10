@@ -34,6 +34,7 @@ make install
 ```
 .
 +- extern
++- base         <- cross platform foundation library
 +- common 			<- utility code shared between server and plugins
 |  +- include
 |  +- src
