@@ -1,5 +1,5 @@
 
-find_package(Gtest REQUIRED)
+find_package(GTest REQUIRED)
 
 #
 # general
