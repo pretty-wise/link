@@ -6,12 +6,16 @@ env:
 
 jobs:
   build:
-
-    runs-on: ubuntu-latest
+    
+    runs-on: ${{matrix.os}}
+    
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
     
     steps:
     - uses: actions/checkout@v1
-    - name: install gtest
+    - name: Install GTest
       run: |
         wget https://github.com/google/googletest/archive/master.zip
         unzip master.zip
@@ -23,11 +27,11 @@ jobs:
         sudo make install
         cd ${{runner.workspace}}
         export GTEST_DIR="${{runner.workspace}}/googletest/googletest/" GTEST_LIB_DIR="${{runner.workspace}}/googletest/build/lib/"
-    - name: prepare
+    - name: Prepare Workspace
       run: cmake -E make_directory ${{runner.workspace}}/build
-    - name: configure
+    - name: Configure
       working-directory: ${{runner.workspace}}/build
       run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE
-    - name: make
+    - name: Build
       working-directory: ${{runner.workspace}}/build
       run: cmake --build . --config $BUILD_TYPE
