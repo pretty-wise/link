@@ -52,13 +52,13 @@ target_include_directories(test_plugin_watch PUBLIC
 )
 add_test(NAME test_plugin_watch COMMAND $<TARGET_FILE:test_plugin_watch>)
 
-add_executable(test_socket_watch "general/test_socket_watch.cpp")
-target_link_libraries(test_socket_watch PRIVATE ${GTEST_BOTH_LIBRARIES} link_core)
-target_include_directories(test_socket_watch PUBLIC
-	${GTEST_INCLUDE_DIRS}
-  $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/link/src/core>
-)
-add_test(NAME test_socket_watch COMMAND $<TARGET_FILE:test_socket_watch>)
+#add_executable(test_socket_watch "general/test_socket_watch.cpp")
+#target_link_libraries(test_socket_watch PRIVATE ${GTEST_BOTH_LIBRARIES} link_core)
+#target_include_directories(test_socket_watch PUBLIC
+#${GTEST_INCLUDE_DIRS}
+#$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/link/src/core>
+#)
+#add_test(NAME test_socket_watch COMMAND $<TARGET_FILE:test_socket_watch>)
 
 #
 # link
