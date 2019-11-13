@@ -7,10 +7,7 @@ namespace Link {
 
 class RestCommand {
 public:
-	/// C-tor.
 	RestCommand() : m_prev(0), m_next(0), m_id(0) {}
-
-	/// D-tor.
 	virtual ~RestCommand(){}
 
 	/// Command name getter.

@@ -10,13 +10,13 @@ namespace Link{
 class RestCommand;
 class JsonReader;
 
+/// Interface allowing plugins to register rest commands and communicate
+/// with the rest plugin.
 class RestClient {
 public:
-	/// C-tor.
 	RestClient();
-
-	/// D-tor.
 	~RestClient();
+  
 	/// Registers a command.
 	/// @param command Command to register.
 	/// @return true if command has been registered, false otherwise.

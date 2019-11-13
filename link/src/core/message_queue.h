@@ -11,11 +11,9 @@ namespace Link {
 /// Thread safe message queue.
 class MessageQueue {
 public:
-	/// C-tor.
 	/// @param bytes Size of message queue buffer.
 	MessageQueue(unsigned int bytes);
-
-	/// D-tor.
+  
 	~MessageQueue();
 
 	/// Writes data to the queue.

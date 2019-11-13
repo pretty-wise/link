@@ -26,13 +26,11 @@ namespace Base {
 class RingAllocator : public Allocator {
 public:
   RingAllocator();
-  /// C-tor.
   /// The allocator itself does not manage the memory it allocates from.
   /// @param memory A buffer to allocate from.
   /// @param size The size of provided buffer
   RingAllocator(void *memory, unsigned int size);
 
-  /// D-tor.
   ~RingAllocator();
 
   /// Allocates specified bytes of memory using specified alignment.
