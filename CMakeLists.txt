@@ -1,5 +1,6 @@
 cmake_minimum_required (VERSION 3.0)
 project (link)
+
 set (link_VERSION_MAJOR 0)
 set (link_VERSION_MINOR 1)
 set (link_VERSION 1.0)
@@ -140,7 +141,7 @@ add_subdirectory(extern)
 #
 project(link_common)
 
-add_library (link_common 
+add_library (link_common STATIC
   common/include/common/json/json_writer.h
   common/src/json/json_writer.cpp
   common/include/common/json/json_reader.h
@@ -199,7 +200,11 @@ compile_proto (PROTOCOL link/src/core
   link/src/core/protocol/handshake.proto
 )
 
-add_library (link_core ${PUBLIC_FILES} ${PRIVATE_FILES} ${PROTOCOL})
+add_library (link_core STATIC
+	${PUBLIC_FILES} 
+	${PRIVATE_FILES} 
+	${PROTOCOL}
+)
 
 target_include_directories(link_core 
 	PUBLIC
@@ -221,7 +226,9 @@ set (SOURCES
 	link/src/plugin/link_private.c
 )
 
-add_library (link_plugin ${SOURCES})
+add_library (link_plugin STATIC
+	${SOURCES}
+)
 
 target_link_libraries (link_plugin PUBLIC base)
 

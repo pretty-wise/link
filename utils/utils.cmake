@@ -28,7 +28,7 @@ function (plugin_framework PLUGIN_NAME)
     ${CMAKE_SOURCE_DIR}/plugins/common/src/plugin_main.cpp
   )
 
-  add_library (${PLUGIN_NAME} SHARED
+  add_library (${PLUGIN_NAME} MODULE
     ${SRC_LIST}
     ${FRAMEWORK_SRC}
   )
