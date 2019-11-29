@@ -11,7 +11,7 @@ jobs:
     
     strategy:
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-latest, macOS-latest]
     
     steps:
     - uses: actions/checkout@v1
@@ -35,3 +35,6 @@ jobs:
     - name: Build
       working-directory: ${{runner.workspace}}/build
       run: cmake --build . --config $BUILD_TYPE
+    - name: Test
+      working-directory: ${{runner.workspace}}/build
+      run: ctest
